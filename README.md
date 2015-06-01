@@ -1,4 +1,5 @@
-# tdigest
+tdigest  [![Build Status](https://secure.travis-ci.org/welch/tdigest.png?branch=master)](http://travis-ci.org/welch/tdigest)
+========
 Javascript implementation of Dunning's T-Digest for streaming quantile approximation
 
 The T-Digest is a data structure and algorithm for constructing an
