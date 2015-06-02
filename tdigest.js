@@ -17,7 +17,7 @@ function TDigest(delta, K, CX) {
     this.delta = (delta === undefined) ? 0.01 : delta;
     this.K = (K === undefined) ? 25 : K;
     this.CX = (CX === undefined) ? 1.1 : CX;
-    this.centroids = new RBTree(compare_centroids);
+    this.centroids = new RBTree(compare_centroid_means);
     this.nreset = 0;
     this.reset();
 }
@@ -46,7 +46,7 @@ TDigest.prototype.size = function() {
     return this.centroids.size;
 };
 
-function compare_centroids(a, b) {
+function compare_centroid_means(a, b) {
     // order two centroids by mean.
     //
     if (a.mean !== b.mean) {
@@ -57,6 +57,12 @@ function compare_centroids(a, b) {
     } else {
         return 0 ; // equality is ok during searches
     }
+}
+
+function compare_centroid_cumns(a, b) {
+    // order two centroids by cumn. 
+    //
+    return (a.cumn - b.cumn);
 }
 
 function pop_random(choices) {
@@ -117,29 +123,29 @@ TDigest.prototype._cumulate = function(exact) {
 };
 
 TDigest.prototype.find_nearest = function(x) {
-    // find the centroid(s) whose means are closest to x
-    // (there can be multiples because of per-centroid count limits).
+    // find the centroid(s) whose means are closest to x (there can be
+    // multiples because of per-centroid count limits, particularly in
+    // categorical streams).
     //
     var iter = this.centroids.upperBound({mean:x}); // x < iter || iter==null
-    var upper = iter.data();
-    if (upper !== null) {
-        // jump to the end of string of duplicates
-        iter = this.centroids.upperBound({mean:upper.mean});
-    }
-    var prev = (iter.data() === null) ? iter.prev() : iter.data(); 
-    if (prev === null) {
+    var c = (iter.data() === null) ? iter.prev() : iter.data();
+    if (c === null) {
         return [];
     }
-    // walk backwards looking for closer centroids
-    var min = Math.abs(prev.mean - x);
-    var nearest = [prev];
+    // walk the duplicates to find rightmost bound
+    while (iter.next() !== null && iter.data().mean === c.mean) {
+    }
+    // walk backwards looking for closest centroids. 
+    c = iter.prev();
+    var min = Math.abs(c.mean - x);
+    var nearest = [c];
     var dx;
-    while ((prev = iter.prev()) && (dx = Math.abs(prev.mean - x)) <= min) {
+    while ((c = iter.prev()) && (dx = Math.abs(c.mean - x)) <= min) {
         if (dx < min) {
             min = dx;
             nearest = [];
         }
-        nearest.push(prev);
+        nearest.push(c);
     }
     return nearest;
 };
@@ -176,7 +182,7 @@ TDigest.prototype._addweight = function(c, x, n, inplace) {
 };
 
 TDigest.prototype._centroid_quantile = function(c) {
-    // quick-and-dirty quantile estimate for centroid's mean.
+    // quantile estimate for a centroid's mean is a simple special case
     //
     if (this.size() === 0) {
         return NaN;
@@ -220,6 +226,33 @@ TDigest.prototype._digest = function(x, n) {
     }
 };
 
+TDigest.prototype.bound_mean = function(x) {
+    // find rightmost centroids (in case of duplicate means) lower and
+    // upper such that lower.mean <= x < upper.mean
+    //
+    var iter = this.centroids.upperBound({mean:x}); // x < iter
+    var c = iter.prev();      // c <= x
+    var cnext = iter.next() ; // x < cnext
+    while (iter.next() !== null && iter.data().mean === cnext.mean) {
+        cnext = iter.data(); // walk the duplicates to find rightmost
+    }
+    return [c, cnext];
+};
+
+TDigest.prototype.bound_cumn = function(cumn) {
+    // find centroids lower and upper such that lower.cumn <= cumn < upper.cumn
+    //
+    // XXX because the centroids have the same sort order by mean or
+    // by cumn, swap out the comparator in our balanced tree then
+    // search. sleazy!
+    this.centroids._comparator = compare_centroid_cumns;
+    var iter = this.centroids.upperBound({cumn:cumn}); // cumn < iter 
+    var c = iter.prev();      // c <= cumn
+    var cnext = iter.next() ; // cumn < cnext, no worries about duplicates
+    this.centroids._comparator = compare_centroid_means;
+    return [c, cnext];
+};
+
 TDigest.prototype.quantile = function(x) {
     // return approximate quantile for value x, in the range 0..1.  In
     // a small departure from the published algorithm, don't extrapolate
@@ -236,16 +269,12 @@ TDigest.prototype.quantile = function(x) {
     this._cumulate(true); // be sure cumns are exact
     // find centroids that bracket x and interpolate x's cumn from
     // their cumn's.
-    var iter = this.centroids.upperBound({mean:x}); // x.mean < iter
-    var c = iter.prev();      // c.mean <= x.mean
-    var cnext = iter.next() ; // x.mean < cnext.mean
-    while (iter.next() !== null && iter.data().mean === cnext.mean) {
-        cnext = iter.data(); // walk the duplicates to find max cumn
-    }
-    var dxn = (cnext.cumn - c.cumn) * (x - c.mean) / (cnext.mean - c.mean);
+    var bound = this.bound_mean(x);
+    var lower = bound[0], upper = bound[1];
+    var dxn = (upper.cumn - lower.cumn) * (x - lower.mean) / (upper.mean - lower.mean);
     // correct for endpoint weight truncation. Since we expect the extremes
     // to have a single point each, expect to lose a half from each. 
-    return (c.cumn + dxn - 0.5) / (this.n - 1);
+    return (lower.cumn + dxn - 0.5) / (this.n - 1);
 };
     
 TDigest.prototype.quantiles = function(xlist) {
@@ -267,18 +296,14 @@ TDigest.prototype.percentile = function(p) {
     this._cumulate(true); // be sure cumns are exact
     var target = p * (this.n - 1) + 0.5; // correct for endweight truncation
     // find centroids whose cumns bracket target, then interpolate x
-    // from their means. you could binary search since cumns are sorted
-    // and distinct, but let's just walk.
-    var iter = this.centroids.iterator();
-    var c = iter.data(), cprev, cnext;
-    while ((cnext = iter.next()) && cnext.cumn <= target) {
-        c = cnext;
+    // from their means. 
+    var bound = this.bound_cumn(target);
+    var lower = bound[0], upper = bound[1];
+    if (upper === null) {
+        return this.centroids.max().mean ; // ran off the edge
     }
-    if (cnext === null) {
-        return this.centroids.max().mean; // ran off the edge
-    }
-    var dx = (cnext.mean - c.mean) * (target - c.cumn) / (cnext.cumn - c.cumn);
-    return c.mean + dx;
+    var dx = (upper.mean - lower.mean) * (target - lower.cumn) / (upper.cumn - lower.cumn);
+    return lower.mean + dx;
 };
     
 TDigest.prototype.percentiles = function(plist) {
