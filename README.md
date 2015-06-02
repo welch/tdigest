@@ -1,9 +1,11 @@
-tdigest  [![Build Status](https://secure.travis-ci.org/welch/tdigest.png?branch=master)](http://travis-ci.org/welch/tdigest)
-========
+# tdigest
+
+[![Build Status](https://travis-ci.org/welch/tdigest.svg?branch=master)](https://travis-ci.org/welch/tdigest) [![NPM version](http://img.shields.io/npm/v/tdigest.svg)](https://www.npmjs.org/package/tdigest)
+
 Javascript implementation of Dunning's T-Digest for streaming quantile approximation
 
 The T-Digest is a data structure and algorithm for constructing an
-approximate distribution for a set of real numbers presented as a
+approximate distribution for a collection of real numbers presented as a
 stream. The algorithm makes no guarantees, but behaves well enough in
 practice that implementations have been included in Apache Mahout and
 ElasticSearch for computing fast summaries and approximate order
