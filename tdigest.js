@@ -286,23 +286,20 @@ TDigest.prototype.percentile = function(p) {
     // return the approximate x value for the specified percentile.
     // As with quantiles, map between [0..1] and the observed range of data.
     //
+    var cumn = p * (this.n - 1) + 0.5; // correct for endweight truncation
     if (this.size() === 0) {
         return NaN;
-    } else if (p <= 0) {
+    } else if (cumn <= 0.5) {
         return this.centroids.min().mean;
-    } else if (p >= 1) {
+    } else if (cumn >= this.n - 0.5) {
         return this.centroids.max().mean;
     }
     this._cumulate(true); // be sure cumns are exact
-    var target = p * (this.n - 1) + 0.5; // correct for endweight truncation
-    // find centroids whose cumns bracket target, then interpolate x
+    // find centroids whose cumns bracket cumn, then interpolate x
     // from their means. 
-    var bound = this.bound_cumn(target);
+    var bound = this.bound_cumn(cumn);
     var lower = bound[0], upper = bound[1];
-    if (upper === null) {
-        return this.centroids.max().mean ; // ran off the edge
-    }
-    var dx = (upper.mean - lower.mean) * (target - lower.cumn) / (upper.cumn - lower.cumn);
+    var dx = (upper.mean - lower.mean) * (cumn - lower.cumn) / (upper.cumn - lower.cumn);
     return lower.mean + dx;
 };
     
