@@ -102,6 +102,23 @@ describe('digests in which points are merged into centroids', function(){
              {mean:1, n:1}]
         );
     }); 
+    it('handles duplicates', function(){
+        var tdigest = new TDigest(1,0,0);
+        var i, N = 10;
+        for (i = 0 ; i < N ; i++) {
+            tdigest.digest(0.0);
+            tdigest.digest(1.0);
+            tdigest.digest(0.5);
+        };
+        deepEqual(
+            tdigest.asArray(),
+            [{mean:0.0, n:1},
+             {mean:0.0, n:N-1},
+             {mean:0.5, n:N},
+             {mean:1.0, n:N-1},
+             {mean:1.0, n:1}]
+        );
+    }); 
 });
 
 describe('redigest', function(){
