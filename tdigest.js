@@ -49,6 +49,11 @@ TDigest.prototype.size = function() {
 function compare_centroid_means(a, b) {
     // order two centroids by mean.
     //
+    if (a === null) {
+        // XXX super-narrow workaround for
+        // https://github.com/vadimg/js_bintrees/pull/14
+        return NaN;
+    }
     if (a.mean !== b.mean) {
         return (a.mean - b.mean);
     } else if (a.cumn !== undefined && b.cumn !== undefined) {
@@ -62,6 +67,11 @@ function compare_centroid_means(a, b) {
 function compare_centroid_cumns(a, b) {
     // order two centroids by cumn. 
     //
+    if (a === null) {
+        // XXX super-narrow workaround for
+        // https://github.com/vadimg/js_bintrees/pull/14
+        return NaN;
+    }
     return (a.cumn - b.cumn);
 }
 

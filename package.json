@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/welch/tdigest",
   "dependencies": {
-    "bintrees": "https://github.com/welch/js_bintrees/tarball/master"
+    "bintrees": "^1.0.0"
   },
   "devDependencies": {
     "better-assert": "^1.0.2",

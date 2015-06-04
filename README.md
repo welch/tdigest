@@ -8,13 +8,14 @@ The T-Digest is a data structure and algorithm for constructing an
 approximate distribution for a collection of real numbers presented as a
 stream. The algorithm makes no guarantees, but behaves well enough in
 practice that implementations have been included in Apache Mahout and
-ElasticSearch for computing fast summaries and approximate order
+ElasticSearch for computing summaries and approximate order
 statistics over a stream.
 
-For a pleasant overview of T-Digest's behavior, see Davidson-Pilon's
+For an overview of T-Digest's behavior, see Davidson-Pilon's
 [blog post](http://dataorigami.net/blogs/napkin-folding/19055451-percentile-and-quantile-estimation-of-big-data-the-t-digest) regarding a python implementation. For more details,
 there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) and [reference implementation](https://github.com/tdunning/t-digest) (Java).
-This javascript implementation is based on a reading of the paper.
+This javascript implementation is based on a reading of the paper,
+with some boundary and performance tweaks.
 
 ## Example
 ```
@@ -32,8 +33,7 @@ console.log("median ~ "+tdigest.percentile(0.5));
 See also [example.js](https://github.com/welch/tdigest/blob/master/example.js) in this package.
 
 ## Dependencies
-`bintrees`: packages.json specifies a fork of [https://github.com/vadimg/js_bintrees](https://github.com/vadimg/js_bintrees)
-that corrects a tree-traversal bug. You'll need it until PR#14 is merged.
+`bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
 
 
 
