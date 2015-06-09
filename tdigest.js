@@ -169,7 +169,7 @@ TDigest.prototype._new_centroid = function(x, n, cumn) {
     // inserting, set cumn to its given value since we never rely on
     // cumn order among equivalent means.
     //
-    var c = {mean:x, n:n, cumn:this.n}; 
+    var c = {mean:x, n:n, cumn:this.n+n}; 
     this.centroids.insert(c);
     c.cumn = cumn;
     this.n += n;
@@ -240,6 +240,7 @@ TDigest.prototype.bound_mean = function(x) {
     // find rightmost centroids (in case of duplicate means) lower and
     // upper such that lower.mean <= x < upper.mean
     //
+    this._cumulate(true); // be sure cumns are exact
     var iter = this.centroids.upperBound({mean:x}); // x < iter
     var c = iter.prev();      // c <= x
     var cnext = iter.next() ; // x < cnext
@@ -252,9 +253,9 @@ TDigest.prototype.bound_mean = function(x) {
 TDigest.prototype.bound_cumn = function(cumn) {
     // find centroids lower and upper such that lower.cumn <= cumn < upper.cumn
     //
-    // XXX because the centroids have the same sort order by mean or
-    // by cumn, swap out the comparator in our balanced tree then
-    // search. sleazy!
+    this._cumulate(true); // be sure cumns are exact
+    // XXX because mean and cumn give rise to the same sort order
+    // (up to identical means), use the mean rbtree for our cumn search.
     this.centroids._comparator = compare_centroid_cumns;
     var iter = this.centroids.upperBound({cumn:cumn}); // cumn < iter 
     var c = iter.prev();      // c <= cumn
@@ -269,6 +270,8 @@ TDigest.prototype.quantile = function(x) {
     // beyond endpoints (we do not expect c.n > 1 in the extreme
     // centroids, and don't want to invent density beyond them)
     //
+    // this triggers cumulate() if cumn's are out of date.
+    //
     if (this.size() === 0) {
         return NaN;
     } else if (x <= this.centroids.min().mean) {
@@ -276,7 +279,6 @@ TDigest.prototype.quantile = function(x) {
     } else if (x >= this.centroids.max().mean) {
         return 1.0;
     }
-    this._cumulate(true); // be sure cumns are exact
     // find centroids that bracket x and interpolate x's cumn from
     // their cumn's.
     var bound = this.bound_mean(x);
@@ -296,6 +298,8 @@ TDigest.prototype.percentile = function(p) {
     // return the approximate x value for the specified percentile.
     // As with quantiles, map between [0..1] and the observed range of data.
     //
+    // this triggers cumulate() if cumn's are out of date.
+    //
     var cumn = p * (this.n - 1) + 0.5; // correct for endweight truncation
     if (this.size() === 0) {
         return NaN;
@@ -304,7 +308,6 @@ TDigest.prototype.percentile = function(p) {
     } else if (cumn >= this.n - 0.5) {
         return this.centroids.max().mean;
     }
-    this._cumulate(true); // be sure cumns are exact
     // find centroids whose cumns bracket cumn, then interpolate x
     // from their means. 
     var bound = this.bound_cumn(cumn);
