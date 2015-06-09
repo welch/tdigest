@@ -1,5 +1,7 @@
 # tdigest
 
+[![NPM](https://nodei.co/npm/tdigest.png?downloads=true&downloadRank=true)](https://nodei.co/npm/tdigest/) [![NPM](https://nodei.co/npm-dl/tdigest.png?months=6&height=3)](https://nodei.co/npm/tdigest/)
+
 [![Build Status](https://travis-ci.org/welch/tdigest.svg?branch=master)](https://travis-ci.org/welch/tdigest) [![NPM version](http://img.shields.io/npm/v/tdigest.svg)](https://www.npmjs.org/package/tdigest)
 
 Javascript implementation of Dunning's T-Digest for streaming quantile approximation
