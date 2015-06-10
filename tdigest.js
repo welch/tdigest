@@ -83,7 +83,7 @@ function pop_random(choices) {
     return choices.splice(idx, 1)[0];
 }
 
-TDigest.prototype.asArray = function(everything) {
+TDigest.prototype.toArray = function(everything) {
     // return {mean,n} of centroids as an array ordered by mean.
     //
     var result = [];
@@ -96,7 +96,7 @@ TDigest.prototype.asArray = function(everything) {
     return result;
 };
     
-TDigest.prototype.digest = function(x, n) {
+TDigest.prototype.push = function(x, n) {
     // incorporate value or array of values x, having count n into the
     // TDigest. n defaults to 1. If called with an array, recompress after
     // digesting the items.
@@ -105,7 +105,7 @@ TDigest.prototype.digest = function(x, n) {
         for (var i = 0 ; i < x.length ; i++) {
             this._digest(x[i], n);
         }
-        this.redigest();
+        this.compress();
     } else {
         this._digest(x, n);
     }
@@ -232,7 +232,7 @@ TDigest.prototype._digest = function(x, n) {
     this._cumulate(false);
     if (this.K && this.size() > this.K / this.delta) {
         // re-process the centroids and hope for some compression.
-        this.redigest();
+        this.compress();
     }
 };
 
@@ -321,17 +321,17 @@ TDigest.prototype.percentiles = function(plist) {
     return plist.map(this.percentile, this);
 };
 
-TDigest.prototype.redigest = function() {
+TDigest.prototype.compress = function() {
     // TDigests experience worst case compression (none) when input
     // increases monotonically.  Improve on any bad luck by
     // reconsuming digest centroids as if they were weighted points
     // while shuffling their order (and hope for the best).
     //
-    var points = this.asArray();
+    var points = this.toArray();
     this.reset();
     while (points.length > 0) {
         var c = pop_random(points);
-        this.digest(c.mean, c.n);
+        this.push(c.mean, c.n);
     }
     this._cumulate(true);
 };
