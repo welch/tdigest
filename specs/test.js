@@ -1,6 +1,6 @@
 var deepEqual = require('assert').deepEqual;
 var assert = require('better-assert');
-var TDigest = require('./tdigest').TDigest;
+var TDigest = require('tdigest').TDigest;
 
 describe('digests in which each point becomes a centroid', function(){
   it('consumes a point', function(){
@@ -178,11 +178,11 @@ describe('quantiles', function(){
   it('quantiles from lots of uniformly distributed points', function(){
       var tdigest = new TDigest();
       var i, x=[], N = 100000;
+      var maxerr = 0;
       for (i = 0 ; i < N ; i += 1) {
           x.push(Math.random());
       }
       tdigest.digest(x);
-      maxerr = 0;
       for (i = 0.01 ; i <= 1 ; i += 0.01) {
           var q = tdigest.quantile(i);
           maxerr = Math.max(maxerr, Math.abs(i-q));
@@ -219,11 +219,11 @@ describe('percentiles', function(){
   it('percentiles from lots of uniformly distributed points', function(){
       var tdigest = new TDigest();
       var i, x=[], N = 100000;
+      var maxerr = 0;
       for (i = 0 ; i < N ; i += 1) {
           x.push(Math.random());
       }
       tdigest.digest(x);
-      maxerr = 0;
       for (i = 0.01 ; i <= 1 ; i += 0.01) {
           var q = tdigest.percentile(i);
           maxerr = Math.max(maxerr, Math.abs(i-q));
