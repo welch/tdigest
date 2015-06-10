@@ -22,17 +22,6 @@ function TDigest(delta, K, CX) {
     this.reset();
 }
 
-TDigest.prototype.summary = function() {
-    var s = ["approximating "+this.n+" samples using "+
-             this.size()+" centroids, delta="+this.delta+", CX="+this.CX,
-             "min = "+this.percentile(0),
-             "Q1  = "+this.percentile(0.25),
-             "Q2  = "+this.percentile(0.5),
-             "Q3  = "+this.percentile(0.75),
-             "max = "+this.percentile(1.0)];
-    return s.join('\n');
-};
-
 TDigest.prototype.reset = function() {
     // prepare to digest new points.
     //
@@ -44,6 +33,30 @@ TDigest.prototype.reset = function() {
 
 TDigest.prototype.size = function() {
     return this.centroids.size;
+};
+
+TDigest.prototype.toArray = function(everything) {
+    // return {mean,n} of centroids as an array ordered by mean.
+    //
+    var result = [];
+    if (everything) {
+        this._cumulate(true); // be sure cumns are exact
+        this.centroids.each(function(c) { result.push(c); });
+    } else {
+        this.centroids.each(function(c) { result.push({mean:c.mean, n:c.n}); });
+    }
+    return result;
+};
+    
+TDigest.prototype.summary = function() {
+    var s = ["approximating "+this.n+" samples using "+
+             this.size()+" centroids, delta="+this.delta+", CX="+this.CX,
+             "min = "+this.percentile(0),
+             "Q1  = "+this.percentile(0.25),
+             "Q2  = "+this.percentile(0.5),
+             "Q3  = "+this.percentile(0.75),
+             "max = "+this.percentile(1.0)];
+    return s.join('\n');
 };
 
 function compare_centroid_means(a, b) {
@@ -83,28 +96,25 @@ function pop_random(choices) {
     return choices.splice(idx, 1)[0];
 }
 
-TDigest.prototype.toArray = function(everything) {
-    // return {mean,n} of centroids as an array ordered by mean.
-    //
-    var result = [];
-    if (everything) {
-        this._cumulate(true); // be sure cumns are exact
-        this.centroids.each(function(c) { result.push(c); });
-    } else {
-        this.centroids.each(function(c) { result.push({mean:c.mean, n:c.n}); });
-    }
-    return result;
-};
-    
 TDigest.prototype.push = function(x, n) {
     // incorporate value or array of values x, having count n into the
     // TDigest. n defaults to 1.
+    //
     n = n || 1;
     x = Array.isArray(x) ? x : [x];
     for (var i = 0 ; i < x.length ; i++) {
         this._digest(x[i], n);
     }
 };
+
+TDigest.prototype.push_centroid = function(c) {
+    // incorporate centroid or array of centroids c
+    //
+    c = Array.isArray(c) ? c : [c];
+    for (var i = 0 ; i < c.length ; i++) {
+        this._digest(c[i].mean, c[i].n);
+    }
+}
 
 TDigest.prototype._cumulate = function(exact) {
     // update cumulative counts for each centroid
@@ -235,7 +245,6 @@ TDigest.prototype.bound_mean = function(x) {
     // find rightmost centroids (in case of duplicate means) lower and
     // upper such that lower.mean <= x < upper.mean
     //
-    this._cumulate(true); // be sure cumns are exact
     var iter = this.centroids.upperBound({mean:x}); // x < iter
     var c = iter.prev();      // c <= x
     var cnext = iter.next() ; // x < cnext
@@ -278,6 +287,7 @@ TDigest.prototype.quantile = function(x) {
     // their cumn's.
     var bound = this.bound_mean(x);
     var lower = bound[0], upper = bound[1];
+    this._cumulate(true); // be sure cumns are exact
     var dxn = (upper.cumn - lower.cumn) * (x - lower.mean) / (upper.mean - lower.mean);
     // correct for endpoint weight truncation. Since we expect the extremes
     // to have a single point each, expect to lose a half from each. 
@@ -324,9 +334,10 @@ TDigest.prototype.compress = function() {
     //
     var points = this.toArray();
     this.reset();
+    this.push_centroid(points.shift()); // min
+    this.push_centroid(points.pop()); // max
     while (points.length > 0) {
-        var c = pop_random(points);
-        this.push(c.mean, c.n);
+        this.push_centroid(pop_random(points));
     }
     this._cumulate(true);
 };
