@@ -183,6 +183,7 @@ describe('quantiles', function(){
           x.push(Math.random());
       }
       tdigest.push(x);
+      tdigest.compress();
       for (i = 0.01 ; i <= 1 ; i += 0.01) {
           var q = tdigest.quantile(i);
           maxerr = Math.max(maxerr, Math.abs(i-q));
@@ -224,6 +225,7 @@ describe('percentiles', function(){
           x.push(Math.random());
       }
       tdigest.push(x);
+      tdigest.compress();
       for (i = 0.01 ; i <= 1 ; i += 0.01) {
           var q = tdigest.percentile(i);
           maxerr = Math.max(maxerr, Math.abs(i-q));

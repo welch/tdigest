@@ -7,7 +7,8 @@ tdigest = new TDigest();
 for (var i = 0 ; i < N ; i += 1) {
     x.push(Math.random() * 10 - 5);
 };
-tdigest.digest(x);
+tdigest.push(x);
+tdigest.compress(x);
 console.log(tdigest.summary());
 for (var p = 0 ; p <= 1.0 ; p += 0.1) {
     console.log("p = "+round2(p)+", q ~ "+round2(tdigest.percentile(p)));

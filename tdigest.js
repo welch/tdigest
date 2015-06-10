@@ -98,16 +98,11 @@ TDigest.prototype.toArray = function(everything) {
     
 TDigest.prototype.push = function(x, n) {
     // incorporate value or array of values x, having count n into the
-    // TDigest. n defaults to 1. If called with an array, recompress after
-    // digesting the items.
+    // TDigest. n defaults to 1.
     n = n || 1;
-    if (Array.isArray(x)) {
-        for (var i = 0 ; i < x.length ; i++) {
-            this._digest(x[i], n);
-        }
-        this.compress();
-    } else {
-        this._digest(x, n);
+    x = Array.isArray(x) ? x : [x];
+    for (var i = 0 ; i < x.length ; i++) {
+        this._digest(x[i], n);
     }
 };
 

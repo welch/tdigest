@@ -33,7 +33,8 @@ for (var i = 0 ; i < N ; i += 1) {
     x.push(Math.random() * 10 - 5);
 };
 tdigest = new TDigest();
-tdigest.digest(x);
+tdigest.push(x);
+tdigest.compress(x);
 console.log(tdigest.summary());
 console.log("median ~ "+tdigest.percentile(0.5));
 ```
