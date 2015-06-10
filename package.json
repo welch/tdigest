@@ -4,7 +4,7 @@
   "description": "javascript implementation of Dunning's T-Digest for streaming quantile approximation",
   "main": "tdigest.js",
   "scripts": {
-    "test": "mocha test.js"
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,10 @@
     "bintrees": "^1.0.0"
   },
   "devDependencies": {
+    "assert": "*",
     "better-assert": "^1.0.2",
-    "mocha": "^2.2.5"
+    "grunt": "^0.4.5",
+    "grunt-dry": "^0.3.0",
+    "mocha": "*"
   }
 }
