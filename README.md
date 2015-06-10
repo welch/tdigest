@@ -1,7 +1,5 @@
-# tdigest
-
-[![NPM](https://nodei.co/npm/tdigest.png?downloads=true&downloadRank=true)](https://nodei.co/npm/tdigest/) [![NPM](https://nodei.co/npm-dl/tdigest.png?months=6&height=3)](https://nodei.co/npm/tdigest/)
-
+tdigest
+============
 [![Build Status](https://travis-ci.org/welch/tdigest.svg?branch=master)](https://travis-ci.org/welch/tdigest) [![NPM version](http://img.shields.io/npm/v/tdigest.svg)](https://www.npmjs.org/package/tdigest)
 
 Javascript implementation of Dunning's T-Digest for streaming quantile approximation
@@ -19,8 +17,16 @@ there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/d
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
 
-## Example
+Quickstart
+------------
+
+### node.js:
+
 ```
+npm install tdigest
+```
+
+```javascript
 var TDigest = require('tdigest').TDigest;
 var x=[], N = 100000;
 for (var i = 0 ; i < N ; i += 1) {
@@ -33,6 +39,21 @@ console.log("median ~ "+tdigest.percentile(0.5));
 ```
 
 See also [example.js](https://github.com/welch/tdigest/blob/master/example.js) in this package.
+
+### In the browser:
+
+The following grunt tasks are configured (via the [grunt-dry](https://www.npmjs.com/package/grunt-dry) dev dependency) to generate
+a [UMD-wrapped](https://github.com/umdjs/umd) version of tdigest that can be loaded through a variety of front-end
+module systems:
+
+**grunt build**
+
+Uses [grunt-pure-cjs](https://github.com/RReverser/grunt-pure-cjs) to generate browser/tdigest.js and browser/specs/*.spec.js by bundling the commonjs files into a single file for both the module itself and any mocha spec files.
+
+**grunt test**
+
+Runs unit tests using server-side mocha in node.js from `specs/*.js` and in browser using `browser/specs/*.js.
+(the npm test script is configured to run this as well)
 
 ## Dependencies
 `bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
