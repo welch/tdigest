@@ -17,10 +17,22 @@ there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/d
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
 
-Quickstart
+changes since 0.0.4:
+--------------------
+#### API Overhaul:
+* asArray() -> toArray()
+* redigest() -> compact()
+* digest() -> push()
+* pushing an array no longer triggers compaction
+
+#### UMD wrappers
+A grunt build task has been added to create a UMD-wrapped version of tdigest
+and dependencies for importing as a standalone module in client-side javascript.
+
+quickstart
 ------------
 
-### node.js:
+#### node.js:
 
 ```
 npm install tdigest
@@ -41,7 +53,7 @@ console.log("median ~ "+tdigest.percentile(0.5));
 
 See also [example.js](https://github.com/welch/tdigest/blob/master/example.js) in this package.
 
-### In the browser:
+#### In the browser:
 
 The following grunt tasks are configured (via the [grunt-dry](https://www.npmjs.com/package/grunt-dry) dev dependency) to generate
 a [UMD-wrapped](https://github.com/umdjs/umd) version of tdigest that can be loaded through a variety of front-end
@@ -56,7 +68,8 @@ Uses [grunt-pure-cjs](https://github.com/RReverser/grunt-pure-cjs) to generate b
 Runs unit tests using server-side mocha in node.js from `specs/*.js` and in browser using `browser/specs/*.js.
 (the npm test script is configured to run this as well)
 
-## Dependencies
+dependencies
+-------------
 `bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
 
 
