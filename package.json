@@ -27,8 +27,7 @@
     "bintrees": "^1.0.0"
   },
   "devDependencies": {
-    "assert": "*",
-    "better-assert": "^1.0.2",
+    "chai": "^3.0.0",
     "grunt": "^0.4.5",
     "grunt-dry": "^0.3.0",
     "mocha": "^2.1.0"

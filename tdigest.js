@@ -105,7 +105,7 @@ TDigest.prototype.push_centroid = function(c) {
     for (var i = 0 ; i < c.length ; i++) {
         this._digest(c[i].mean, c[i].n);
     }
-}
+};
 
 TDigest.prototype._cumulate = function(exact) {
     // update cumulative counts for each centroid
@@ -153,14 +153,8 @@ TDigest.prototype._new_centroid = function(x, n, cumn) {
     // create and insert a new centroid into the digest (don't update
     // cumulatives).
     //
-    // XXX for inserting, cumn needs to be a unique tiebreaker (the
-    // RBTree implementation doesn't accept duplicates). After
-    // inserting, set cumn to its given value since we never rely on
-    // cumn order among equivalent means.
-    //
-    var c = {mean:x, n:n, cumn:this.n+n}; 
+    var c = {mean:x, n:n, cumn:cumn}; 
     this.centroids.insert(c);
-    c.cumn = cumn;
     this.n += n;
     return c;
 };

@@ -8,12 +8,8 @@ module.exports = function(grunt) {
                 'bintrees': {
                     browserBuild: 'node_modules/bintrees/dist/rbtree.min.js'
                 },
-                'assert': {
-                    browserBuild: 'node_modules/assert/assert.js',
-                    testOnly: true
-                },
-                'better-assert': {
-                    browserBuild: 'node_modules/better-assert/index.js',
+                'chai': {
+                    browserBuild: 'node_modules/chai/chai.js',
                     testOnly: true
                 }
             }

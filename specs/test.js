@@ -1,25 +1,24 @@
-var deepEqual = require('assert').deepEqual;
-var assert = require('better-assert');
 var TDigest = require('tdigest').TDigest;
+var assert = require('chai').assert;
 
 describe('digests in which each point becomes a centroid', function(){
     it('consumes a point', function(){
         var tdigest = new TDigest();
         tdigest.push(0);
         var points = tdigest.toArray();
-        deepEqual(points, [{mean:0, n:1}]);
+        assert.deepEqual(points, [{mean:0, n:1}]);
     });
     it('consumes two points', function(){
         var tdigest = new TDigest();
         tdigest.push([0,1]);
         var points = tdigest.toArray();
-        deepEqual(points, [{mean:0, n:1}, {mean:1, n:1}]);
+        assert.deepEqual(points, [{mean:0, n:1}, {mean:1, n:1}]);
     });
     it('consumes three points', function(){
         var tdigest = new TDigest();
         tdigest.push([0, 1, -1]);
         var points = tdigest.toArray();
-        deepEqual(points, [{mean:-1, n:1}, {mean:0, n:1}, {mean:1, n:1}]);
+        assert.deepEqual(points, [{mean:-1, n:1}, {mean:0, n:1}, {mean:1, n:1}]);
     });
     it('consumes increasing-valued points', function(){
         var tdigest = new TDigest(0, 0); // force a new centroid for each pt
@@ -53,7 +52,7 @@ describe('digests in which points are merged into centroids', function(){
             tdigest.push(1000);
         }
         var points = tdigest.toArray(true);
-        deepEqual(points, [{mean: 1000, n:N, cumn: N / 2}]);
+        assert.deepEqual(points, [{mean: 1000, n:N, cumn: N / 2}]);
     });
     it('handles multiple duplicates', function(){
         var tdigest = new TDigest(1,0,0);
@@ -63,7 +62,7 @@ describe('digests in which points are merged into centroids', function(){
             tdigest.push(1.0);
             tdigest.push(0.5);
         };
-        deepEqual(
+        assert.deepEqual(
             tdigest.toArray(),
             [{mean:0.0, n:N},
              {mean:0.5, n:N},
@@ -114,21 +113,21 @@ describe('quantiles', function(){
         tdigest.push(0);
         var x = [-0.5, 0, 0.5, 1.0, 1.5];
         var q = [0, 0.5, 1, 1, 1];
-        deepEqual(tdigest.quantiles(x), q);
+        assert.deepEqual(tdigest.quantiles(x), q);
     });
     it('from two points', function(){
         var tdigest = new TDigest(0, 0);
         tdigest.push([0, 1]);
         var x = [-0.5, 0, 0.5, 1.0, 1.5];
         var q = [0, 0.25, 0.5, 0.75, 1];
-        deepEqual(tdigest.quantiles(x), q);
+        assert.deepEqual(tdigest.quantiles(x), q);
     });
     it('from three points', function(){
         var tdigest = new TDigest(0, 0);
         tdigest.push([-1, 0, 1] );
         var x = [-1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5];
         var q = [0, 1/6, 2/6, 3/6, 4/6, 5/6, 1];
-        deepEqual(tdigest.quantiles(x), q);
+        assert.deepEqual(tdigest.quantiles(x), q);
     });
     it('from three points is same as from multiples of those points', function(){
         var tdigest = new TDigest(0, 0);
@@ -138,14 +137,14 @@ describe('quantiles', function(){
         tdigest.push([0,1,-1]);
         tdigest.push([0,1,-1]);
         var result2 = tdigest.quantiles(x);
-        deepEqual(result1, result2);
+        assert.deepEqual(result1, result2);
     });
     it('from four points away from the origin', function(){
         var tdigest = new TDigest(0, 0);
         tdigest.push([10,11,12,13]);
         var x = [9, 10, 11, 12, 13, 14];
         var q = [0, 1/8, 3/8, 5/8, 7/8, 1];
-        deepEqual(tdigest.quantiles(x), q);
+        assert.deepEqual(tdigest.quantiles(x), q);
     });
     it('from four points is same as from multiples of those points', function(){
         var tdigest = new TDigest(0, 0);
@@ -155,7 +154,7 @@ describe('quantiles', function(){
         tdigest.push([10,11,12,13]);
         tdigest.push([10,11,12,13]);
         var result2 = tdigest.quantiles(x);
-        deepEqual(result1, result2);
+        assert.deepEqual(result1, result2);
     });
     it('from lots of uniformly distributed points', function(){
         var tdigest = new TDigest();
@@ -189,14 +188,14 @@ describe('percentiles', function(){
         tdigest.push(0);
         var p = [0, 0.5, 1.0];
         var x = [0, 0, 0];
-        deepEqual(tdigest.percentiles(p), x);
+        assert.deepEqual(tdigest.percentiles(p), x);
     });
     it('percentiles from two points', function(){
         var tdigest = new TDigest(0, 0);
         tdigest.push([0, 1]);
         var p = [0, 1/4, 1/2, 3/4, 1];
         var x = [0, 0, 0.5, 1.0, 1.0];
-        deepEqual(tdigest.percentiles(p), x);
+        assert.deepEqual(tdigest.percentiles(p), x);
     });
     it('percentiles from three points', function(){
         // this one is strange-looking but correct: moving 1/4 into
@@ -210,7 +209,7 @@ describe('percentiles', function(){
         tdigest.push([0, 0.5, 1]);
         var p = [0, 1/4, 1/2, 3/4, 1];
         var x = [0, 1/8, 4/8, 7/8, 1];
-        deepEqual(tdigest.percentiles(p), x);
+        assert.deepEqual(tdigest.percentiles(p), x);
     });
     it('percentiles from three points is same as multiples of the points', function(){
         var tdigest = new TDigest(0, 0);
@@ -220,7 +219,7 @@ describe('percentiles', function(){
         tdigest.push([10,11,12]);
         tdigest.push([10,11,12]);
         var result2 = tdigest.percentiles(p);
-        deepEqual(result1, result2);
+        assert.deepEqual(result1, result2);
     });
     it('percentiles from lots of uniformly distributed points', function(){
         var tdigest = new TDigest();

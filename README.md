@@ -21,9 +21,11 @@ changes since 0.0.4:
 --------------------
 #### API Overhaul:
 * asArray() -> toArray()
-* redigest() -> compact()
+* redigest() -> compress()
 * digest() -> push()
-* pushing an array no longer triggers compaction
+* pushing an array no longer triggers compression
+
+bugfixes and speed improvements.
 
 #### UMD wrappers
 A grunt build task has been added to create a UMD-wrapped version of tdigest
