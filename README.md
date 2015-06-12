@@ -17,9 +17,8 @@ there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/d
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
 
-changes since 0.0.4:
---------------------
-#### API Overhaul:
+###changes since 0.0.4:
+**API Overhaul:**
 * asArray() -> toArray()
 * redigest() -> compress()
 * digest() -> push()
@@ -27,8 +26,7 @@ changes since 0.0.4:
 
 bugfixes and speed improvements.
 
-#### UMD wrappers
-A grunt build task has been added to create a UMD-wrapped version of tdigest
+A `grunt dist` task has been added to create a UMD-wrapped version of tdigest
 and dependencies for importing as a standalone module in client-side javascript.
 
 quickstart
@@ -46,29 +44,34 @@ var x=[], N = 100000;
 for (var i = 0 ; i < N ; i += 1) {
     x.push(Math.random() * 10 - 5);
 };
-tdigest = new TDigest();
-tdigest.push(x);
-tdigest.compress(x);
-console.log(tdigest.summary());
-console.log("median ~ "+tdigest.percentile(0.5));
+td = new TDigest();
+td.push(x);
+td.compress(x);
+console.log(td.summary());
+console.log("median ~ "+td.percentile(0.5));
 ```
 
 See also [example.js](https://github.com/welch/tdigest/blob/master/example.js) in this package.
 
 #### In the browser:
 
-The following grunt tasks are configured (via the [grunt-dry](https://www.npmjs.com/package/grunt-dry) dev dependency) to generate
-a [UMD-wrapped](https://github.com/umdjs/umd) version of tdigest that can be loaded through a variety of front-end
-module systems:
+The `grunt dist` task has been configured to generate
+a self-contained [UMD-wrapped](https://github.com/umdjs/umd) version of tdigest in dist/tdigest.js.
 
-**grunt build**
+Embed it in HTML like this:
+```
+<script src="dist/tdigest.js"></script>
+<script>
+    var td = new this.tdigest.TDigest();
+    for (var i=0; i < 1000000; i++) {
+        td.push(Math.random());
+    }
+    td.compress();
+    document.write(td.summary())
+</script>
+```
 
-Uses [grunt-pure-cjs](https://github.com/RReverser/grunt-pure-cjs) to generate browser/tdigest.js and browser/specs/*.spec.js by bundling the commonjs files into a single file for both the module itself and any mocha spec files.
-
-**grunt test**
-
-Runs unit tests using server-side mocha in node.js from `specs/*.js` and in browser using `browser/specs/*.js.
-(the npm test script is configured to run this as well)
+See also [example.html](https://github.com/welch/tdigest/blob/master/example.html) in this package.
 
 dependencies
 -------------

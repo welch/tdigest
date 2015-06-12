@@ -1,4 +1,4 @@
-var TDigest = require('tdigest').TDigest;
+var TDigest = require('../tdigest').TDigest;
 var assert = require('chai').assert;
 
 describe('digests in which each point becomes a centroid', function(){

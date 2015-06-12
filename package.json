@@ -29,7 +29,7 @@
   "devDependencies": {
     "chai": "^3.0.0",
     "grunt": "^0.4.5",
-    "grunt-dry": "^0.3.0",
+    "grunt-pure-cjs": "^1.4.0",
     "mocha": "^2.1.0"
   }
 }
