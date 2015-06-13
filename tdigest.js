@@ -130,7 +130,7 @@ TDigest.prototype._cumulate = function(exact) {
 
 TDigest.prototype.find_nearest = function(x) {
     // find the centroid closest to x. The assumption of
-    // unique means and a unique nearest centroid differs from the
+    // unique means and a unique nearest centroid departs from the
     // paper, see _digest() below
     //
     if (this.size() === 0) {
@@ -174,10 +174,6 @@ TDigest.prototype._addweight = function(nearest, x, n) {
 TDigest.prototype._digest = function(x, n) {
     // incorporate value x, having count n into the TDigest.
     //
-    // explicitly test for new max/min, rather than relying on 0/1
-    // quantile value in the max_n calculation. quantile does not
-    // achieve 0 or 1 at bounding centroid because cumn at centroid
-    // median is given half the centroid mass.
     var min = this.centroids.min();
     var max = this.centroids.max();
     if (this.size() === 0 || x < min.mean) {
@@ -188,26 +184,18 @@ TDigest.prototype._digest = function(x, n) {
         var nearest = this.find_nearest(x);
         if (nearest.mean === x) {
             // accumulate exact matches into the centroid without
-            // limit. this is a change from the paper, made so that
-            // centroid means remain unique.  although the paper
-            // allows for the creation of duplicate centroid means
-            // (when a centroid is too full to absorb a new point) and
-            // iterates over such duplicates, its quantile() and
-            // icdf() do not properly account for them (and they turn
-            // out to be messy to accommodate, for no apparent
-            // benefit).  this is much tidier.
+            // limit. this is a departure from the paper, made so that
+            // centroid means remain unique and code can be simple.
             this._addweight(nearest, x, n);
             return;
         }
         var p = nearest.cumn / this.n;
         var max_n = Math.floor(4 * this.n * this.delta * p * (1 - p));
         if (nearest != min && nearest != max && max_n - nearest.n >= n) {
-            // only merge when nearest is not a boundary point and
-            // there is room inside nearest to absorb all of x.  if
-            // there's not room, don't bother splitting some of x into
-            // nearest, as we'll have to make a new centroid anyway
-            // for the remainder (departure from the paper suggested
-            // by uniqeness of centroids).
+            // if there's not room for all of n, don't bother merging
+            // some of it into nearest, as we'll have to make a new
+            // centroid anyway for the remainder (departure from the
+            // paper).
             this._addweight(nearest, x, n);
         } else {
             // create a new centroid at x
@@ -234,12 +222,9 @@ TDigest.prototype.bound_mean = function(x) {
 };
 
 TDigest.prototype.quantile = function(x) {
-    // return approximate quantile (0..1) for data value x.  The
-    // handling of max and min data values differs from the paper,
-    // which snaps them to 0 and 1. Here their centroids are not
-    // treated specially, and the boundary centroids will report half
-    // their weight. data values outside the observed range return 0
-    // or 1.
+    // return approximate quantile (0..1) for data value x.  Beware
+    // that boundary values will report half their centroid weight
+    // inward from 0/1. Data values outside the observed range return 0/1
     //
     // this triggers cumulate() if cumn's are out of date.
     //
