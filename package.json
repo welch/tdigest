@@ -1,6 +1,6 @@
 {
   "name": "tdigest",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "javascript implementation of Dunning's T-Digest for streaming quantile approximation",
   "main": "tdigest.js",
   "scripts": {
