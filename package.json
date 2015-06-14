@@ -27,6 +27,7 @@
     "bintrees": "^1.0.0"
   },
   "devDependencies": {
+    "better-assert": "^1.0.2",
     "chai": "^3.0.0",
     "grunt": "^0.4.5",
     "grunt-pure-cjs": "^1.4.0",

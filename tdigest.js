@@ -1,11 +1,18 @@
+//
+// TDigest:
+//
+// approximate distribution percentiles from a stream of reals
+// 
 var RBTree = require('bintrees').RBTree;
 
 function TDigest(delta, K, CX) {
     // allocate a TDigest structure.
     //
-    // delta is the compression factor, related to the max fraction of
-    // counts that can be owned by one centroid (bigger means more
-    // compression).
+    // delta is the compression factor, the max fraction of mass that
+    // can be owned by one centroid (bigger, up to 1.0, means more
+    // compression). delta=false switches off TDigest behavior and treats
+    // the distribution as discrete, with no merging and exact values
+    // reported.
     //
     // K is a size threshold that triggers recompression as the TDigest
     // grows during input.  (Set it to 0 to disable automatic recompression)
@@ -14,7 +21,8 @@ function TDigest(delta, K, CX) {
     // for quantile estimation during ingest (see cumulate()).  Set to
     // 0 to use exact quantiles for each new point.
     //
-    this.delta = (delta === undefined) ? 0.01 : delta;
+    this.discrete = (delta === false);
+    this.delta = delta || 0.01;
     this.K = (K === undefined) ? 25 : K;
     this.CX = (CX === undefined) ? 1.1 : CX;
     this.centroids = new RBTree(compare_centroid_means);
@@ -49,8 +57,8 @@ TDigest.prototype.toArray = function(everything) {
 };
     
 TDigest.prototype.summary = function() {
-    var s = ["approximating "+this.n+" samples using "+
-             this.size()+" centroids, delta="+this.delta+", CX="+this.CX,
+    var approx = (this.discrete) ? "exact " : "approximating ";
+    var s = [approx + this.n + " samples using " + this.size() + " centroids",
              "min = "+this.percentile(0),
              "Q1  = "+this.percentile(0.25),
              "Q2  = "+this.percentile(0.5),
@@ -66,25 +74,17 @@ function compare_centroid_means(a, b) {
         // XXX super-narrow workaround for https://github.com/vadimg/js_bintrees/pull/14
         return NaN;
     }
-    return a.mean - b.mean;
+    return (a.mean > b.mean) ? 1 : (a.mean < b.mean) ? -1 : 0;
 }
 
-function compare_centroid_cumns(a, b) {
-    // order two centroids by cumn. 
+function compare_centroid_mean_cumns(a, b) {
+    // order two centroids by mean_cumn. 
     //
     if (a === null) {
         // XXX super-narrow workaround for https://github.com/vadimg/js_bintrees/pull/14
         return NaN;
     }
-    return (a.cumn - b.cumn);
-}
-
-function pop_random(choices) {
-    // remove and return an item randomly chosen from the array of choices
-    // (mutates choices)
-    //
-    var idx = Math.floor(Math.random() * choices.length);
-    return choices.splice(idx, 1)[0];
+    return (a.mean_cumn - b.mean_cumn);
 }
 
 TDigest.prototype.push = function(x, n) {
@@ -121,9 +121,10 @@ TDigest.prototype._cumulate = function(exact) {
         return;
     }
     var cumn = 0;
+    var self = this;
     this.centroids.each(function(c) {
-        c.cumn = cumn + c.n/2 ; // at the mean, we've accumulated half the n.
-        cumn += c.n;
+        c.mean_cumn = cumn + c.n / 2; // half of n at the mean
+        cumn = c.cumn = cumn + c.n;
     });
     this.n = this.last_cumulate = cumn;
 };
@@ -136,24 +137,24 @@ TDigest.prototype.find_nearest = function(x) {
     if (this.size() === 0) {
         return null;
     }
-    var iter = this.centroids.upperBound({mean:x}); // x < iter || iter==null
+    var iter = this.centroids.lowerBound({mean:x}); // x <= iter || iter==null
     var c = (iter.data() === null) ? iter.prev() : iter.data();
-    // walk backwards looking for closest centroid.
-    var nearest = c;
-    var mindist = Math.abs(nearest.mean - x);
-    var dx;
-    while ((c = iter.prev()) && (dx = Math.abs(c.mean - x)) < mindist) {
-        mindist = dx;
-        nearest = c;
+    if (c.mean === x || this.discrete) {
+        return c; // c is either x or a neighbor (discrete: no distance func)
     }
-    return nearest;
+    var prev = iter.prev();
+    if (prev && Math.abs(prev.mean - x) < Math.abs(c.mean - x)) {
+        return prev;
+    } else {
+        return c;
+    }
 };
 
 TDigest.prototype._new_centroid = function(x, n, cumn) {
     // create and insert a new centroid into the digest (don't update
     // cumulatives).
     //
-    var c = {mean:x, n:n, cumn:cumn}; 
+    var c = {mean:x, n:n, cumn:cumn};
     this.centroids.insert(c);
     this.n += n;
     return c;
@@ -164,10 +165,12 @@ TDigest.prototype._addweight = function(nearest, x, n) {
     // nearest will not shift its relative position in the tree and
     // require reinsertion.
     //
-    var newmean = nearest.mean + n * (x - nearest.mean) / (nearest.n + n);
-    nearest.mean = newmean;
+    if (x !== nearest.mean) {
+        nearest.mean += n * (x - nearest.mean) / (nearest.n + n);
+    }
+    nearest.cumn += n;
+    nearest.mean_cumn += n / 2;
     nearest.n += n;
-    nearest.cumn += n / 2;
     this.n += n;
 };
 
@@ -176,35 +179,33 @@ TDigest.prototype._digest = function(x, n) {
     //
     var min = this.centroids.min();
     var max = this.centroids.max();
-    if (this.size() === 0 || x < min.mean) {
-        this._new_centroid(x, n, n / 2); // first or new min point
-    } else if (max.mean < x ) {
-        this._new_centroid(x, n, this.n + n / 2); // new max point
+    var nearest = this.find_nearest(x);
+    if (nearest && nearest.mean === x) {
+        // accumulate exact matches into the centroid without
+        // limit. this is a departure from the paper, made so 
+        // centroids remain unique and code can be simple.
+        this._addweight(nearest, x, n);
+    } else if (nearest === min) {
+        this._new_centroid(x, n, 0); // new point around min boundary
+    } else if (nearest === max ) {
+        this._new_centroid(x, n, this.n); // new point around max boundary
+    } else if (this.discrete) {
+        this._new_centroid(x, n, nearest.cumn); // never merge
     } else {
-        var nearest = this.find_nearest(x);
-        if (nearest.mean === x) {
-            // accumulate exact matches into the centroid without
-            // limit. this is a departure from the paper, made so that
-            // centroid means remain unique and code can be simple.
-            this._addweight(nearest, x, n);
-            return;
-        }
-        var p = nearest.cumn / this.n;
+        // conider a merge based on nearest centroid's capacity. if
+        // there's not room for all of n, don't bother merging any of
+        // it into nearest, as we'll have to make a new centroid
+        // anyway for the remainder (departure from the paper).
+        var p = nearest.mean_cumn / this.n;
         var max_n = Math.floor(4 * this.n * this.delta * p * (1 - p));
-        if (nearest != min && nearest != max && max_n - nearest.n >= n) {
-            // if there's not room for all of n, don't bother merging
-            // some of it into nearest, as we'll have to make a new
-            // centroid anyway for the remainder (departure from the
-            // paper).
+        if (max_n - nearest.n >= n) {
             this._addweight(nearest, x, n);
         } else {
-            // create a new centroid at x
-            this._new_centroid(x, n, nearest.cumn); // approximate cumn
+            this._new_centroid(x, n, nearest.cumn);
         }
-        this._cumulate(false);
     }
     this._cumulate(false);
-    if (this.K && this.size() > this.K / this.delta) {
+    if (!this.discrete && this.K && this.size() > this.K / this.delta) {
         // re-process the centroids and hope for some compression.
         this.compress();
     }
@@ -221,13 +222,24 @@ TDigest.prototype.bound_mean = function(x) {
     return [lower, upper];
 };
 
-TDigest.prototype.quantile = function(x) {
-    // return approximate quantile (0..1) for data value x.  Beware
-    // that boundary values will report half their centroid weight
-    // inward from 0/1. Data values outside the observed range return 0/1
+TDigest.prototype.p_rank = function(x_or_xlist) {
+    // return approximate percentile-ranks (0..1) for data value x.
+    // or list of x.  calculated according to
+    // https://en.wikipedia.org/wiki/Percentile_rank
+    //
+    // (Note that in continuous mode, boundary sample values will
+    // report half their centroid weight inward from 0/1 as the
+    // percentile-rank. X values outside the observed range return
+    // 0/1)
     //
     // this triggers cumulate() if cumn's are out of date.
     //
+    var xs = Array.isArray(x_or_xlist) ? x_or_xlist : [x_or_xlist];
+    var ps = xs.map(this._p_rank, this);
+    return Array.isArray(x_or_xlist) ? ps : ps[0];
+};
+
+TDigest.prototype._p_rank = function(x) {
     if (this.size() === 0) {
         return NaN;
     } else if (x < this.centroids.min().mean) {
@@ -237,68 +249,79 @@ TDigest.prototype.quantile = function(x) {
     }
     // find centroids that bracket x and interpolate x's cumn from
     // their cumn's.
+    this._cumulate(true); // be sure cumns are exact
     var bound = this.bound_mean(x);
     var lower = bound[0], upper = bound[1];
-    this._cumulate(true); // be sure cumns are exact
-    var cumn = lower.cumn;
-    if (lower !== upper) {
-        cumn += (upper.cumn - lower.cumn) * (x - lower.mean) / (upper.mean - lower.mean);
+    var mean_cumn = lower.mean_cumn;
+    if (!this.discrete && lower !== upper) {
+        mean_cumn += (x - lower.mean) * (upper.mean_cumn - lower.mean_cumn) / (upper.mean - lower.mean);
     }
-    return cumn / this.n;
+    return mean_cumn / this.n;
 };
     
-TDigest.prototype.quantiles = function(xlist) {
-    // return a list of quantiles for the values in xlist
-    return xlist.map(this.quantile, this);
-};
-
-TDigest.prototype.bound_cumn = function(cumn) {
-    // find centroids lower and upper such that lower.cumn < x <
-    // upper.cumn or lower.cumn === x === upper.cumn. Don't call
+TDigest.prototype.bound_mean_cumn = function(cumn) {
+    // find centroids lower and upper such that lower.mean_cumn < x <
+    // upper.mean_cumn or lower.mean_cumn === x === upper.mean_cumn. Don't call
     // this for cumn out of bounds.
     //
-    // XXX because mean and cumn give rise to the same sort order
-    // (up to identical means), use the mean rbtree for our cumn search.
-    this.centroids._comparator = compare_centroid_cumns;
-    var iter = this.centroids.upperBound({cumn:cumn}); // cumn < iter 
+    // XXX because mean and mean_cumn give rise to the same sort order
+    // (up to identical means), use the mean rbtree for our search.
+    this.centroids._comparator = compare_centroid_mean_cumns;
+    var iter = this.centroids.upperBound({mean_cumn:cumn}); // cumn < iter 
     this.centroids._comparator = compare_centroid_means;
     var lower = iter.prev();      // lower <= cumn
-    var upper = (lower.cumn === cumn) ? lower : iter.next();
+    var upper = (lower && lower.mean_cumn === cumn) ? lower : iter.next();
     return [lower, upper];
 };
 
-TDigest.prototype.percentile = function(p) {
-    // return the approximate data value q at the specified percentile (0..1).
-    // also known as the inverse cdf.
+TDigest.prototype.percentile = function(p_or_plist) {
+    // for percentage p (0..1), or for each p in a list of ps, return
+    // the smallest data value q at which at least p percent of the
+    // observations <= q.
+    //
+    // for discrete distributions, this selects q using the Nearest
+    // Rank Method
+    // (https://en.wikipedia.org/wiki/Percentile#The_Nearest_Rank_method)
+    // (in scipy, same as percentile(...., interpolation='higher')
+    //
+    // for continuous distributions, interpolates data values between
+    // count-weighted bracketing means.
     //
     // this triggers cumulate() if cumn's are out of date.
     //
-    this._cumulate(true); // be sure cumns are exact
-    var cumn = p * this.n;
-    var min = this.centroids.min();
-    var max = this.centroids.max();
+    var ps = Array.isArray(p_or_plist) ? p_or_plist : [p_or_plist];
+    var qs = ps.map(this._percentile, this);
+    return Array.isArray(p_or_plist) ? qs : qs[0];
+};
+
+TDigest.prototype._percentile = function(p) {
     if (this.size() === 0) {
         return NaN;
-    } else if (cumn <= min.cumn) {
-        return min.mean;
-    } else if (cumn >= max.cumn) {
-        return max.mean;
     }
-    // find centroids whose cumns bracket cumn, then interpolate x
-    // from their means. 
-    var bound = this.bound_cumn(cumn);
+    this._cumulate(true); // be sure cumns are exact
+    var min = this.centroids.min();
+    var max = this.centroids.max();
+    var h = this.n * p;
+    var bound = this.bound_mean_cumn(h);
     var lower = bound[0], upper = bound[1];
-    var q = lower.mean;
-    if (lower !== upper) {
-        q += (upper.mean - lower.mean) * (cumn - lower.cumn) / (upper.cumn - lower.cumn);
+    if (upper === lower || lower === null || upper === null) {
+        return (lower || upper).mean;
+    } else if (!this.discrete) {
+        return lower.mean + (h - lower.mean_cumn) * (upper.mean - lower.mean) / (upper.mean_cumn - lower.mean_cumn);
+    } else if (h === lower.mean_cumn) {
+        return lower.mean;
+    } else {
+        return upper.mean; 
     }
-    return q;
 };
     
-TDigest.prototype.percentiles = function(plist) {
-    // return a list of percentile values for the percentages in plist
-    return plist.map(this.percentile, this);
-};
+function pop_random(choices) {
+    // remove and return an item randomly chosen from the array of choices
+    // (mutates choices)
+    //
+    var idx = Math.floor(Math.random() * choices.length);
+    return choices.splice(idx, 1)[0];
+}
 
 TDigest.prototype.compress = function() {
     // TDigests experience worst case compression (none) when input
@@ -312,8 +335,6 @@ TDigest.prototype.compress = function() {
     var points = this.toArray();
     this.reset();
     this.compressing = true;
-    this.push_centroid(points.shift()); // min
-    this.push_centroid(points.pop()); // max
     while (points.length > 0) {
         this.push_centroid(pop_random(points));
     }
@@ -321,6 +342,58 @@ TDigest.prototype.compress = function() {
     this.compressing = false;
 };
 
+function Digest(config) {
+    // allocate a distribution digest structure. This is an extension
+    // of a TDigest structure that starts in exact histogram (discrete)
+    // mode, and automatically switches to TDigest mode for large
+    // samples that appear to be from a continuous distribution.
+    //
+    this.config = config || {};
+    this.mode = this.config.mode || 'auto'; // disc, cont, auto
+    TDigest.call(this, this.mode === 'cont' ? config.delta : false);
+    this.digest_ratio = this.config.ratio || 0.9;
+    this.digest_thresh = this.config.thresh || 1000; 
+    this.n_unique = 0;
+}
+Digest.prototype = Object.create(TDigest.prototype);
+Digest.prototype.constructor = Digest;
+
+Digest.prototype.push = function(x_or_xlist) {
+    TDigest.prototype.push.call(this, x_or_xlist);
+    this.check_continuous();
+};
+
+Digest.prototype._new_centroid = function(x, n, cumn) {
+    this.n_unique += 1;
+    TDigest.prototype._new_centroid.call(this, x, n, cumn);
+};
+
+Digest.prototype._addweight = function(nearest, x, n) {
+    if (nearest.n === 1) {
+        this.n_unique -= 1;
+    }
+    TDigest.prototype._addweight.call(this, nearest, x, n);
+};
+
+Digest.prototype.check_continuous = function() {
+    // while in 'auto' mode, if there are many unique elements, assume
+    // they are from a continuous distribution and switch to 'cont'
+    // mode (tdigest behavior). Return true on transition from
+    // disctete to continuous.
+    if (this.mode !== 'auto' || this.size() < this.digest_thresh) {
+        return false;
+    }
+    if (this.n_unique / this.size() > this.digest_ratio) {
+        this.mode = 'cont';
+        this.discrete = false;
+        this.delta = this.config.delta || 0.01;
+        this.compress();
+        return true;
+    }
+    return false;
+};
+
 module.exports = {
-    'TDigest': TDigest
+    'TDigest': TDigest,
+    'Digest': Digest
 };

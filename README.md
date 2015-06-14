@@ -17,17 +17,40 @@ there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/d
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
 
-###changes since 0.0.4:
-**API Overhaul:**
+**changes in 0.1.0:**
+
+Discrete mode: when a TDigest is created with delta=false, the sample
+distribution is treated as discrete. TDigest behavior is disabled,
+differing samples are never merged (they needn't even be numeric), and
+percentiles are reported as nearest exact data values rather than
+interpolated.
+
+Digest: distribution digest structure. Starts in exact histogram
+(discrete) mode, remains in exact mode for reasonable numbers of
+distinct values as sample size inreases, and automatically switches to
+TDigest mode for large samples that appear to be from a continuous
+distribution.
+
+Renamed quantile() -> p_rank(), Percentile Rank.
+
+percentile() and p_rank() now accept arrays or singleton arguments.
+
+**changes in 0.0.7:**
+
+A `grunt dist` task has been added to create a UMD-wrapped version of tdigest
+and dependencies for importing as a standalone module in client-side javascript.
+
+bugfixes and speed improvements.
+
+**changes in 0.0.5:**
+
+API Overhaul:
 * asArray() -> toArray()
 * redigest() -> compress()
 * digest() -> push()
 * pushing an array no longer triggers compression
 
 bugfixes and speed improvements.
-
-A `grunt dist` task has been added to create a UMD-wrapped version of tdigest
-and dependencies for importing as a standalone module in client-side javascript.
 
 quickstart
 ------------
