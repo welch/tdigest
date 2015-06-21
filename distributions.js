@@ -110,7 +110,7 @@ function exponential() {
 function make_brownian() {
     var brownian_state = 0;
     return function brownian() {
-        brownian_state += (gaussian() - 0.5);
+        brownian_state += gaussian();
         return brownian_state;
     };
 }

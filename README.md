@@ -69,7 +69,7 @@ for (var i = 0 ; i < N ; i += 1) {
 };
 td = new TDigest();
 td.push(x);
-td.compress(x);
+td.compress();
 console.log(td.summary());
 console.log("median ~ "+td.percentile(0.5));
 ```
