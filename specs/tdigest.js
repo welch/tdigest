@@ -109,6 +109,12 @@ describe('percentile ranks', function(){
     // here verify some precise behaviors that may not be relevant at
     // scale.
     //
+    it('reports undefined when given no points', function(){
+        var tdigest = new TDigest();
+        var x = [1, 2, 3];
+        assert.deepEqual(tdigest.p_rank(1), undefined);
+        assert.deepEqual(tdigest.p_rank(x), [undefined,undefined,undefined]);
+    });
     it('from a single point', function(){
         var tdigest = new TDigest();
         tdigest.push(0);
@@ -184,6 +190,12 @@ describe('percentile ranks', function(){
 });
 
 describe('percentiles', function(){
+    it('reports undefined when given no points', function(){
+        var tdigest = new TDigest();
+        var p = [0, 0.5, 1.0];
+        assert.deepEqual(tdigest.percentile(0.5), undefined);
+        assert.deepEqual(tdigest.percentile(p), [undefined,undefined,undefined]);
+    });
     it('from a single point', function(){
         var tdigest = new TDigest();
         tdigest.push(0);

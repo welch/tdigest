@@ -241,7 +241,7 @@ TDigest.prototype.p_rank = function(x_or_xlist) {
 
 TDigest.prototype._p_rank = function(x) {
     if (this.size() === 0) {
-        return NaN;
+        return undefined;
     } else if (x < this.centroids.min().mean) {
         return 0.0;
     } else if (x > this.centroids.max().mean) {
@@ -296,7 +296,7 @@ TDigest.prototype.percentile = function(p_or_plist) {
 
 TDigest.prototype._percentile = function(p) {
     if (this.size() === 0) {
-        return NaN;
+        return undefined;
     }
     this._cumulate(true); // be sure cumns are exact
     var min = this.centroids.min();

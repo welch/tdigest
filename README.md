@@ -1,6 +1,6 @@
 tdigest
 ============
-[![Build Status](https://travis-ci.org/welch/tdigest.svg?branch=master)](https://travis-ci.org/welch/tdigest) [![NPM version](http://img.shields.io/npm/v/tdigest.svg)](https://www.npmjs.org/package/tdigest)
+[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![NPM download][download-image]][npm-url]
 
 Javascript implementation of Dunning's T-Digest for streaming quantile approximation
 
@@ -16,6 +16,12 @@ For an overview of T-Digest's behavior, see Davidson-Pilon's
 there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) and [reference implementation](https://github.com/tdunning/t-digest) (Java).
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
+
+**changes in HEAD:**
+
+1. percentile on an empty digest returns *undefined* or array of *undefined*
+   instead of NaN
+
 
 **changes in 0.1.0:**
 
@@ -101,4 +107,9 @@ dependencies
 `bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
 
 
+[travis-image]: https://travis-ci.org/welch/tdigest.svg?branch=master
+[travis-url]: https://travis-ci.org/welch/tdigest
+[npm-image]: http://img.shields.io/npm/v/tdigest.svg
+[download-image]: http://img.shields.io/npm/dm/tdigest.svg
+[npm-url]: https://www.npmjs.org/package/tdigest
 
