@@ -66,32 +66,27 @@ function uniform() {
     return Math.random();
 }
 
-function boxmuller() {
-    // return a pair of Box-Muller approximate normals, indexed by t
-    var u = 2 * uniform() - 1;
-    var v = 2 * uniform() - 1;
-    var r = u*u + v*v;
-    if (r === 0 || r > 1) {
-        // out of bounds, try again
-        var result = boxmuller();
+var _extra = null;
+function gaussian(mean, sigma) {
+    mean = mean || 0;
+    sigma = sigma || 1;
+    if (_extra != null) { 
+        var result = mean + sigma * _extra; 
+        _extra = null;
         return result;
-    }
-    var c = Math.sqrt(-2*Math.log(r)/r);
-    return [u*c, v*c];
-}
-
-function make_gaussian() {
-    // return a function that returns N(0,1) samples when called
-    var boxen = [];
-    return function gaussian() {
-        if (boxen.length === 0) {
-            boxen = boxmuller();
+    } else {
+        var u = 2 * Math.random() - 1;
+        var v = 2 * Math.random() - 1;
+        var r = u*u + v*v;
+        if (r == 0 || r > 1) {
+            // out of bounds, try again
+            return gaussian(mean, sigma);
         }
-        return boxen.pop();
-    };
+        var c = Math.sqrt(-2*Math.log(r)/r);
+        _extra = u * c;
+        return mean + sigma * v * c;
+    }
 }
-
-var gaussian = make_gaussian();
     
 function chisq() {
     var k = 3;
