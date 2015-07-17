@@ -2,8 +2,6 @@
 // a discrete and TDigest representation of a streaming sample.
 //
 var Digest = require('./tdigest').Digest;
-function round2(x) { return +(Math.round(x + "e+2")  + "e-2"); }
-function round4(x) { return +(Math.round(x + "e+4")  + "e-4"); }
 //
 // create a frequency digest for a small sample. automatically store
 // these as discrete samples and report exact percentiles
@@ -15,7 +13,7 @@ for (var i = 0 ; i < N ; i += 1) {
 }
 console.log(digest.summary());
 for (var p = 0 ; p <= 1.0 ; p += 0.1) {
-    console.log("p = "+round2(p)+", x == "+(digest.percentile(p)));
+    console.log("p = "+p.toFixed(2)+", x == "+(digest.percentile(p)));
 }
 for (var x = -5 ; x <= 5 ; x += 1.0) {
     console.log("x = "+x+", p == "+(digest.p_rank(x)));
@@ -32,7 +30,7 @@ for (i = 0 ; i < N ; i += 1) {
 }
 console.log(digest.summary());
 for (p = 0 ; p <= 1.0 ; p += 0.1) {
-    console.log("p = "+round2(p)+", x == "+(digest.percentile(p)));
+    console.log("p = "+p.toFixed(2)+", x == "+(digest.percentile(p)));
 }
 for (x = -5 ; x <= 5 ; x += 1.0) {
     console.log("x = "+x+", p == "+(digest.p_rank(x)));
@@ -50,7 +48,7 @@ for (i = 0 ; i < N ; i += 1) {
 digest.compress();
 console.log(digest.summary());
 for (p = 0 ; p <= 1.0 ; p += 0.1) {
-    console.log("p = "+round2(p)+", x ~ "+(digest.percentile(p)));
+    console.log("p = "+p.toFixed(2)+", x ~ "+(digest.percentile(p)));
 }
 for (x = -5 ; x <= 5 ; x += 1.0) {
     console.log("x = "+x+", p ~ "+(digest.p_rank(x)));
@@ -66,7 +64,7 @@ for (var i = 0 ; i < N ; i += 1) {
 }
 console.log(digest.summary());
 for (var p = 0 ; p <= 1.0 ; p += 0.1) {
-    console.log("p = "+round2(p)+", x == "+(digest.percentile(p)));
+    console.log("p = "+p.toFixed(2)+", x == "+(digest.percentile(p)));
 }
 for (var x = -5 ; x <= 5 ; x += 1.0) {
     console.log("x = "+x+", p == "+(digest.p_rank(x)));
