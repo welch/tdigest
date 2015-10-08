@@ -2,7 +2,7 @@
 // TDigest:
 //
 // approximate distribution percentiles from a stream of reals
-// 
+//
 var RBTree = require('bintrees').RBTree;
 
 function TDigest(delta, K, CX) {
@@ -55,7 +55,7 @@ TDigest.prototype.toArray = function(everything) {
     }
     return result;
 };
-    
+
 TDigest.prototype.summary = function() {
     var approx = (this.discrete) ? "exact " : "approximating ";
     var s = [approx + this.n + " samples using " + this.size() + " centroids",
@@ -78,7 +78,7 @@ function compare_centroid_means(a, b) {
 }
 
 function compare_centroid_mean_cumns(a, b) {
-    // order two centroids by mean_cumn. 
+    // order two centroids by mean_cumn.
     //
     if (a === null) {
         // XXX super-narrow workaround for https://github.com/vadimg/js_bintrees/pull/14
@@ -182,7 +182,7 @@ TDigest.prototype._digest = function(x, n) {
     var nearest = this.find_nearest(x);
     if (nearest && nearest.mean === x) {
         // accumulate exact matches into the centroid without
-        // limit. this is a departure from the paper, made so 
+        // limit. this is a departure from the paper, made so
         // centroids remain unique and code can be simple.
         this._addweight(nearest, x, n);
     } else if (nearest === min) {
@@ -258,7 +258,7 @@ TDigest.prototype._p_rank = function(x) {
     }
     return mean_cumn / this.n;
 };
-    
+
 TDigest.prototype.bound_mean_cumn = function(cumn) {
     // find centroids lower and upper such that lower.mean_cumn < x <
     // upper.mean_cumn or lower.mean_cumn === x === upper.mean_cumn. Don't call
@@ -267,7 +267,7 @@ TDigest.prototype.bound_mean_cumn = function(cumn) {
     // XXX because mean and mean_cumn give rise to the same sort order
     // (up to identical means), use the mean rbtree for our search.
     this.centroids._comparator = compare_centroid_mean_cumns;
-    var iter = this.centroids.upperBound({mean_cumn:cumn}); // cumn < iter 
+    var iter = this.centroids.upperBound({mean_cumn:cumn}); // cumn < iter
     this.centroids._comparator = compare_centroid_means;
     var lower = iter.prev();      // lower <= cumn
     var upper = (lower && lower.mean_cumn === cumn) ? lower : iter.next();
@@ -311,10 +311,10 @@ TDigest.prototype._percentile = function(p) {
     } else if (h === lower.mean_cumn) {
         return lower.mean;
     } else {
-        return upper.mean; 
+        return upper.mean;
     }
 };
-    
+
 function pop_random(choices) {
     // remove and return an item randomly chosen from the array of choices
     // (mutates choices)
@@ -352,7 +352,7 @@ function Digest(config) {
     this.mode = this.config.mode || 'auto'; // disc, cont, auto
     TDigest.call(this, this.mode === 'cont' ? config.delta : false);
     this.digest_ratio = this.config.ratio || 0.9;
-    this.digest_thresh = this.config.thresh || 1000; 
+    this.digest_thresh = this.config.thresh || 1000;
     this.n_unique = 0;
 }
 Digest.prototype = Object.create(TDigest.prototype);
