@@ -70,20 +70,12 @@ TDigest.prototype.summary = function() {
 function compare_centroid_means(a, b) {
     // order two centroids by mean.
     //
-    if (a === null) {
-        // XXX super-narrow workaround for https://github.com/vadimg/js_bintrees/pull/14
-        return NaN;
-    }
     return (a.mean > b.mean) ? 1 : (a.mean < b.mean) ? -1 : 0;
 }
 
 function compare_centroid_mean_cumns(a, b) {
     // order two centroids by mean_cumn.
     //
-    if (a === null) {
-        // XXX super-narrow workaround for https://github.com/vadimg/js_bintrees/pull/14
-        return NaN;
-    }
     return (a.mean_cumn - b.mean_cumn);
 }
 
