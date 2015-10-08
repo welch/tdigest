@@ -18,7 +18,7 @@ describe('discrete digests', function(){
         }
     });
     it('consumes decreasing-valued points', function(){
-        var tdigest = new TDigest(false); 
+        var tdigest = new TDigest(false);
         var i, N = 100;
         for (i = N - 1 ; i >= 0 ; i = i - 1) {
             tdigest.push(i*10);
@@ -29,7 +29,7 @@ describe('discrete digests', function(){
         }
     });
     it('consumes nonnumeric points', function(){
-        var tdigest = new TDigest(false); 
+        var tdigest = new TDigest(false);
         tdigest.push("foo");
         tdigest.push("bar");
         tdigest.push("baz");
@@ -44,13 +44,13 @@ describe('discrete digests', function(){
             {mean:"bar", n:1},
             {mean:"baz", n:1},
             {mean:"books", n:1},
-            {mean:"bork", n:3}, 
+            {mean:"bork", n:3},
             {mean:"foo", n:2},
             {mean:"freen", n:1},
         ]);
     });
     it('consumes same-valued points into a single point', function(){
-        var tdigest = new TDigest(false); 
+        var tdigest = new TDigest(false);
         var i, N = 100;
         for (i = 0 ; i < N ; i = i + 1) {
             tdigest.push(1000);
@@ -72,7 +72,7 @@ describe('discrete digests', function(){
              {mean:0.5, n:N},
              {mean:1.0, n:N}]
         );
-    }); 
+    });
 });
 
 describe('discrete percentile ranks', function(){
@@ -85,7 +85,7 @@ describe('discrete percentile ranks', function(){
     });
     it('from two points', function(){
         var tdigest = new TDigest(false);
-        tdigest.push([0, 1]); 
+        tdigest.push([0, 1]);
         var x = [-0.5, 0, 0.5, 1.0, 1.5];
         var q = [0, 0.25, 0.25, 0.75, 1];
         assert.deepEqual(tdigest.p_rank(x), q);
@@ -125,7 +125,7 @@ describe('discrete percentile ranks', function(){
         assert.deepEqual(result1, result2);
     });
     it('from nonnumeric points', function(){
-        var tdigest = new TDigest(false); 
+        var tdigest = new TDigest(false);
         tdigest.push("foo");
         tdigest.push("bar");
         tdigest.push("baz");
@@ -166,7 +166,7 @@ describe('discrete percentiles', function(){
         assert.deepEqual(tdigest.percentile(p), x);
     });
     it('from nonnumeric points', function(){
-        var tdigest = new TDigest(false); 
+        var tdigest = new TDigest(false);
         tdigest.push("foo");
         tdigest.push("bar");
         tdigest.push("baz");
@@ -176,5 +176,3 @@ describe('discrete percentiles', function(){
         assert.deepEqual(tdigest.percentile(p), x);
     });
 });
-
-
