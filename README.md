@@ -17,11 +17,15 @@ there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/d
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
 
-**changes in HEAD:**
+**changes in 0.1.1:**
 
 1. percentile on an empty digest returns *undefined* or array of *undefined*
    instead of NaN
 
+2. upgraded bintrees to get bugfix.
+
+3. bugfix for discrete percentile and p_rank, make boundary conditions
+   conform to standard definition.
 
 **changes in 0.1.0:**
 
@@ -112,4 +116,3 @@ dependencies
 [npm-image]: http://img.shields.io/npm/v/tdigest.svg
 [download-image]: http://img.shields.io/npm/dm/tdigest.svg
 [npm-url]: https://www.npmjs.org/package/tdigest
-
