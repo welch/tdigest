@@ -244,11 +244,15 @@ TDigest.prototype._p_rank = function(x) {
     this._cumulate(true); // be sure cumns are exact
     var bound = this.bound_mean(x);
     var lower = bound[0], upper = bound[1];
-    var mean_cumn = lower.mean_cumn;
-    if (!this.discrete && lower !== upper) {
-        mean_cumn += (x - lower.mean) * (upper.mean_cumn - lower.mean_cumn) / (upper.mean - lower.mean);
+    if (this.discrete) {
+        return lower.cumn / this.n;
+    } else {
+        var cumn = lower.mean_cumn;
+        if (lower !== upper) {
+            cumn += (x - lower.mean) * (upper.mean_cumn - lower.mean_cumn) / (upper.mean - lower.mean);
+        }
+        return cumn / this.n;
     }
-    return mean_cumn / this.n;
 };
 
 TDigest.prototype.bound_mean_cumn = function(cumn) {
@@ -296,11 +300,12 @@ TDigest.prototype._percentile = function(p) {
     var h = this.n * p;
     var bound = this.bound_mean_cumn(h);
     var lower = bound[0], upper = bound[1];
+
     if (upper === lower || lower === null || upper === null) {
         return (lower || upper).mean;
     } else if (!this.discrete) {
         return lower.mean + (h - lower.mean_cumn) * (upper.mean - lower.mean) / (upper.mean_cumn - lower.mean_cumn);
-    } else if (h === lower.mean_cumn) {
+    } else if (h <= lower.cumn) {
         return lower.mean;
     } else {
         return upper.mean;
