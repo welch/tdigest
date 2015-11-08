@@ -113,7 +113,6 @@ TDigest.prototype._cumulate = function(exact) {
         return;
     }
     var cumn = 0;
-    var self = this;
     this.centroids.each(function(c) {
         c.mean_cumn = cumn + c.n / 2; // half of n at the mean
         cumn = c.cumn = cumn + c.n;
@@ -295,8 +294,6 @@ TDigest.prototype._percentile = function(p) {
         return undefined;
     }
     this._cumulate(true); // be sure cumns are exact
-    var min = this.centroids.min();
-    var max = this.centroids.max();
     var h = this.n * p;
     var bound = this.bound_mean_cumn(h);
     var lower = bound[0], upper = bound[1];
