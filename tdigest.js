@@ -391,10 +391,13 @@ function Distributable() {
     Digest.call(this, { mode: 'auto', thresh: 25, delta: 0.2 });
 }
 Distributable.prototype = Object.create(Digest.prototype);
+function round1 (n) {
+    return (Math.round(n * 10)) / 10
+};
 Distributable.prototype.toList = function() {
     var result = [];
     this._cumulate(true); // be sure cumns are exact
-    this.centroids.each(function(c) { result.push([c.mean, c.n]); });
+    this.centroids.each(function(c) { result.push([round1(c.mean), c.n]); });
     return result;
 };
 
