@@ -30,6 +30,25 @@ function TDigest(delta, K, CX) {
     this.reset();
 }
 
+TDigest.prototype.load = function( tdObject ) {
+    // given a javascript object, re-initialize ourselves
+    // 
+    // save: is not implemented as JSON.stringify(TDigest object) works just fine
+    // 
+
+    //clear & reload
+    this.centroids.clear();
+    this._traverse(tdObject.centroids._root);
+
+    // init all internal variables based on object
+    this.delta = tdObject.delta;
+    this.K = tdObject.K;
+    this.CX = tdObject.CX;
+    this.n = tdObject.n;
+    this.nreset = tdObject.nreset;
+    this.last_cumulate = tdObject.last_cumulate;
+};
+
 TDigest.prototype.reset = function() {
     // prepare to digest new points.
     //
@@ -139,6 +158,25 @@ TDigest.prototype.find_nearest = function(x) {
     } else {
         return c;
     }
+};
+
+TDigest.prototype._traverse = function(obj) {
+    if ( obj.left ) {
+        this._traverse(obj.left);
+    }
+    if ( obj.right ) {
+        this._traverse(obj.right);
+    }
+    if (obj.data) {
+        this._insert_centroid(obj.data);
+    }
+}
+
+TDigest.prototype._insert_centroid = function(obj) {
+    // insert a centroid into the digest
+    //
+    this.centroids.insert(obj);
+    this.n += obj.n;
 };
 
 TDigest.prototype._new_centroid = function(x, n, cumn) {
@@ -294,6 +332,8 @@ TDigest.prototype._percentile = function(p) {
         return undefined;
     }
     this._cumulate(true); // be sure cumns are exact
+    var min = this.centroids.min();
+    var max = this.centroids.max();
     var h = this.n * p;
     var bound = this.bound_mean_cumn(h);
     var lower = bound[0], upper = bound[1];
