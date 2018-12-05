@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/welch/tdigest",
   "dependencies": {
-    "bintrees": "1.0.1"
+    "bintrees": "1.0.1",
+    "buffer": "^5.2.1"
   },
   "devDependencies": {
     "better-assert": "^1.0.2",

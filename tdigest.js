@@ -3,7 +3,11 @@
 //
 // approximate distribution percentiles from a stream of reals
 //
+var Buffer = require('buffer/').Buffer;
 var RBTree = require('bintrees').RBTree;
+
+let TDIGEST_VERBOSE_ENCODING_CODE = 1;
+let TDIGEST_SMALL_ENCODING_CODE = 2;
 
 function TDigest(delta, K, CX) {
     // allocate a TDigest structure.
@@ -65,6 +69,26 @@ TDigest.prototype.summary = function() {
              "Q3  = "+this.percentile(0.75),
              "max = "+this.percentile(1.0)];
     return s.join('\n');
+};
+
+TDigest.prototype.asSmallBytes = function() {
+    this.compress();
+    let centroids = this.toArray();
+    let buffer = Buffer.alloc(30 + (centroids.length * 8), 'utf16le');
+
+    buffer.writeInt32LE(TDIGEST_SMALL_ENCODING_CODE, 0);   //   4           (int)      (Encoding type. 1 = full, 2 = small)
+    buffer.writeDoubleLE(this.percentile(0), 32);            // + 8       (double)   (Min value)
+    buffer.writeDoubleLE(this.percentile(100), 96);          // + 8       (double)   (Max value)
+    // This is an adjusted compression that behaves more closely to the tdunning original.
+    let adjusted_compression = this.delta === 0 ? 0 : 1.0 / this.delta;
+    buffer.writeFloatLE(adjusted_compression, 160);          // + 4       (float)    (Compression factor)
+    buffer.writeInt16LE(centroids.length, 192);              // + 2       (short)    (Length of centroid means)
+    buffer.writeInt16LE(0, 208);                             // + 2       (short)    (Temporary Mean Array Length)
+    buffer.writeInt16LE(centroids.length, 224);              // + 2 = 30 (short)    (Last used cell)
+    for (let i = 0; i < centroids.length; i++) {
+        buffer.writeFloatLE(centroids[i]["n"], 240 + (i * 32));     // + 4 (float)  (Weight of centroid)
+        buffer.writeFloatLE(centroids[i]["mean"], 244 + (i * 32));  // + 4 (float)  (Mean of centroid)
+    }
 };
 
 function compare_centroid_means(a, b) {
