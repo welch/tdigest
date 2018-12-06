@@ -1,4 +1,5 @@
 var TDigest = require('../tdigest').TDigest;
+var Buffer = require('buffer/').Buffer;
 var assert = require('better-assert');
 assert.deepEqual = require('chai').assert.deepEqual;
 
@@ -241,4 +242,48 @@ describe('percentiles', function(){
     });
 });
 
+describe('Serialise', function(){
+    it('encode empty histogram large', function(){
+        let tdigest = new TDigest();
+        for (let i = 0 ; i < 100000 ; i += 1) {
+            tdigest.push(Math.random());
+        }
+        let bytes = tdigest.asBytes();
+        let base64Bytes= bytes.toString('base64');
+        console.log(base64Bytes);
+        assert(base64Bytes.length > 60)
+    });
+
+    it('encode empty histogram small', function(){
+        let tdigest = new TDigest();
+        for (let i = 0 ; i < 100000 ; i += 1) {
+            tdigest.push(Math.random());
+        }
+        let bytes = tdigest.asSmallBytes();
+        let base64Bytes= bytes.toString('base64');
+        console.log(base64Bytes);
+        assert(base64Bytes.length > 0)
+    });
+
+    it('load histogram large', function(){
+        let buffer = Buffer.from("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", 'base64');
+        let tdigest = new TDigest().load(buffer);
+        console.log(tdigest.percentile(0.0));
+        console.log(tdigest.percentile(0.25));
+        console.log(tdigest.percentile(0.5));
+        console.log(tdigest.percentile(0.75));
+        console.log(tdigest.percentile(0.95));
+        console.log(tdigest.percentile(0.99));
+        console.log(tdigest.percentile(0.999));
+        console.log(tdigest.percentile(1.0));
+        assert(tdigest.percentile(0.0) ===  0.0000022532144576767244);
+        assert(tdigest.percentile(0.25) === 0.0027074628973260523);
+        assert(tdigest.percentile(0.5) === 0.005076822297898235);
+        assert(tdigest.percentile(0.75) === 0.02065108300514769);
+        assert(tdigest.percentile(0.95) === 0.3630718113121124);
+        assert(tdigest.percentile(0.99) === 0.9046922037805785);
+        assert(tdigest.percentile(0.999) === 2.0023958485286526);
+        assert(tdigest.percentile(1.0) === 0.005076822297898235);
+    });
+});
 
