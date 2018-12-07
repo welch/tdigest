@@ -36,14 +36,10 @@ function TDigest(delta, K, CX) {
 
 TDigest.prototype.load = function(buffer) {
     let offset = 0;
-    buffer = Buffer.from("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", 'base64');
     let encoding = buffer.readInt32BE(offset);
     offset += 4;
     if (encoding === TDIGEST_VERBOSE_ENCODING_CODE) {
-        let min = buffer.readDoubleBE(offset);
-        offset += 8;
-        let max = buffer.readDoubleBE(offset);
-        offset += 8;
+        offset += 16;
         let adjustedCompression = buffer.readDoubleBE(offset);
         offset += 8;
         let centroidCount = buffer.readInt32BE(offset);
@@ -55,7 +51,7 @@ TDigest.prototype.load = function(buffer) {
             centroids.push({"n": 0, "mean": mean})
         }
         for(let i = 0; i < centroidCount; i++) {
-            let weight = buffer.readInt32BE(offset);
+            let weight = buffer.readUInt32BE(offset);
             offset += 4;
             centroids[i]["n"] = weight;
         }
@@ -64,20 +60,19 @@ TDigest.prototype.load = function(buffer) {
         this.push_centroid(centroids);
         return this;
     } else if (encoding === TDIGEST_SMALL_ENCODING_CODE) {
-        let min = buffer.readDoubleBE(offset);
-        offset += 8;
-        let max = buffer.readDoubleBE(offset);
-        offset += 8;
+        offset += 16;
         let adjustedCompression = buffer.readDoubleBE(offset);
         offset += 8;
-        let centroidCount = buffer.readUInt16BE(offset);
+        let centroidCount = buffer.readInt32BE(offset);
         offset += 4;
         let centroids = [];
 
+        let currentMean = 0.0;
         for(let i = 0; i < centroidCount; i++) {
-            let mean = buffer.readFloatBE(offset);
+            let delta = buffer.readFloatBE(offset);
             offset += 4;
-            centroids.push({"n": 0, "mean": mean})
+            currentMean += delta;
+            centroids.push({"n": 0, "mean": currentMean})
         }
 
         for(let i = 0; i < centroidCount; i++) {
@@ -135,25 +130,25 @@ TDigest.prototype.summary = function() {
 TDigest.prototype.asSmallBytes = function() {
     this.compress();
     let centroids = this.toArray();
-    let buffer = Buffer.alloc(40 + (centroids.length * 10));
+    let buffer = Buffer.alloc(40 + (centroids.length * 12));
     // This is an adjusted compression that behaves more closely to the tdunning original.
     let adjusted_compression = this.delta === 0 ? 0 : 1.0 / this.delta;
     let offset = 0;
-    offset = buffer.writeUInt32BE(TDIGEST_SMALL_ENCODING_CODE, offset);     //   4       (int)      (Encoding type. 1 = full, 2 = small)
-    offset = buffer.writeDoubleBE(this.percentile(0), offset);            // + 8       (double)   (Min value)
-    offset = buffer.writeDoubleBE(this.percentile(100), offset);          // + 8       (double)   (Max value)
-    offset = buffer.writeDoubleBE(adjusted_compression, offset);         // + 8       (double)   (Compression factor)
-    offset = buffer.writeUInt16BE(centroids.length, offset);                // + 4       (int)    (Length of centroid means)
+    offset = buffer.writeInt32BE(TDIGEST_SMALL_ENCODING_CODE, offset);     //   4       (int)      (Encoding type. 1 = full, 2 = small)
+    offset = buffer.writeDoubleBE(this.percentile(0), offset);             // + 8       (double)   (Min value)
+    offset = buffer.writeDoubleBE(this.percentile(100), offset);           // + 8       (double)   (Max value)
+    offset = buffer.writeDoubleBE(adjusted_compression, offset);           // + 8       (double)   (Compression factor)
+    offset = buffer.writeInt32BE(centroids.length, offset);                // + 4       (int)      (Length of centroid means)
 
     let x = 0.0;
     centroids.forEach(function(centroid){
-        let delta = centroid.n - x;
+        let delta = parseFloat(centroid.mean) - x;
         x = centroid.mean;
         offset = buffer.writeFloatBE(delta, offset);                       // + 4  (float)  (Mean of centroid)
     });
 
     centroids.forEach(function(centroid){
-        offset = encode(buffer, offset, centroid.n)                         // +(<8)(int)  (Weight of centroid)
+        offset = encode(buffer, offset, centroid.n)                         // +(<8) (bin)  (Weight of centroid)
     });
     return buffer.slice(0, offset);
 };
@@ -164,19 +159,19 @@ TDigest.prototype.asBytes = function() {
     let buffer = Buffer.alloc(40 + (centroids.length * 12));
     // This is an adjusted compression that behaves more closely to the tdunning original.
     let adjusted_compression = this.delta === 0 ? 0 : 1.0 / this.delta;
-    let offset = 0
-    offset = buffer.writeUInt32BE(TDIGEST_VERBOSE_ENCODING_CODE, offset);  //   4       (int)      (Encoding type. 1 = full, 2 = small)
+    let offset = 0;
+    offset = buffer.writeInt32BE(TDIGEST_VERBOSE_ENCODING_CODE, offset);  //   4       (int)      (Encoding type. 1 = full, 2 = small)
     offset = buffer.writeDoubleBE(this.percentile(0), offset);            // + 8       (double)   (Min value)
     offset = buffer.writeDoubleBE(this.percentile(100), offset);          // + 8       (double)   (Max value)
     offset = buffer.writeDoubleBE(adjusted_compression, offset);         // + 8       (double)   (Compression factor)
-    offset = buffer.writeUInt16BE(centroids.length, offset);               // + 4       (int)    (Length of centroid means)
+    offset = buffer.writeInt32BE(centroids.length, offset);               // + 4       (int)    (Length of centroid means)
 
     centroids.forEach(function(centroid){
         offset = buffer.writeDoubleBE(centroid.mean, offset);              // + 8       (double)  (Mean of centroid)
     });
 
     centroids.forEach(function(centroid){
-        offset = buffer.writeUInt32BE(centroid.n, offset)                   // + 4       (int)  (Weight of centroid)
+        offset = buffer.writeInt32BE(centroid.n, offset)                   // + 4       (int)  (Weight of centroid)
     });
     return buffer.slice(0, offset);
 };
@@ -196,7 +191,7 @@ function encode(buffer, offset, n) {
 }
 
 function decode(buffer, offset) {
-    let v = buffer.readUInt8(offset);
+    let v = buffer.readUInt8(offset++);
     let z = 0x7f & v;
     let shift = 7;
     while ((v & 0x80) !== 0) {
