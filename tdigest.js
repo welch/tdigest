@@ -34,15 +34,19 @@ function TDigest(delta, K, CX) {
     this.reset();
 }
 
-TDigest.prototype.load = function(buffer) {
+TDigest.prototype.load = function(buffer, overrideCentroidLimit) {
     let offset = 0;
     let encoding = buffer.readInt32BE(offset);
     offset += 4;
+    const centroidLimit = !overrideCentroidLimit ? 100000 : overrideCentroidLimit;
     if (encoding === TDIGEST_VERBOSE_ENCODING_CODE) {
         offset += 16;
         let adjustedCompression = buffer.readDoubleBE(offset);
         offset += 8;
         let centroidCount = buffer.readInt32BE(offset);
+        if (centroidCount > centroidLimit) {
+            throw "Centroid count requested is too high. Ensure your are loading the correct tdigest format."
+        }
         offset += 4;
         let centroids = [];
         for(let i = 0; i < centroidCount; i++) {
@@ -64,6 +68,9 @@ TDigest.prototype.load = function(buffer) {
         let adjustedCompression = buffer.readDoubleBE(offset);
         offset += 8;
         let centroidCount = buffer.readInt32BE(offset);
+        if (centroidCount > centroidLimit) {
+            throw "Centroid count requested is too high. Ensure your are loading the correct tdigest format."
+        }
         offset += 4;
         let centroids = [];
 
@@ -86,7 +93,7 @@ TDigest.prototype.load = function(buffer) {
         this.push_centroid(centroids);
         return this;
     } else {
-        throwError("Invalid format for serialized histogram")
+        throw "Invalid format for serialized histogram"
     }
 };
 
@@ -184,7 +191,7 @@ function encode(buffer, offset, n) {
         n = n >>> 7;
         k++;
         if (k >= 6) {
-            throwError("Size of n is too large.")
+            throw "Size of n is too large."
         }
     }
     return buffer.writeUInt8(n, offset);
@@ -196,7 +203,7 @@ function decode(buffer, offset) {
     let shift = 7;
     while ((v & 0x80) !== 0) {
         if (shift > 28) {
-            throwError("Shift too large in decode")
+            throw "Shift too large in decode"
         }
         v = buffer.readUInt8(offset++);
         z += (v & 0x7f) << shift;
