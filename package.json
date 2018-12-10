@@ -1,6 +1,6 @@
 {
   "name": "tdigest",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "javascript implementation of Dunning's T-Digest for streaming quantile approximation",
   "main": "tdigest.js",
   "scripts": {
@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/welch/tdigest",
   "dependencies": {
-    "bintrees": "1.0.1"
+    "bintrees": "1.0.1",
+    "buffer": "^5.2.1"
   },
   "devDependencies": {
     "better-assert": "^1.0.2",

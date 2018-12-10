@@ -3,7 +3,11 @@
 //
 // approximate distribution percentiles from a stream of reals
 //
+var Buffer = require('buffer/').Buffer;
 var RBTree = require('bintrees').RBTree;
+
+let TDIGEST_VERBOSE_ENCODING_CODE = 1;
+let TDIGEST_SMALL_ENCODING_CODE = 2;
 
 function TDigest(delta, K, CX) {
     // allocate a TDigest structure.
@@ -29,6 +33,74 @@ function TDigest(delta, K, CX) {
     this.nreset = 0;
     this.reset();
 }
+
+TDigest.prototype.load = function(buffer, overrideCentroidLimit) {
+    // Load a TDigest structure from bytes (AVLTree format).
+    //
+    // See the asBytes(), asSmallBytes() methods for more format specifics.
+    //
+    // The delta is loaded from the compression factor in the data.
+    // The K and CX are kept from the TDigest creation time.
+    let offset = 0;
+    let encoding = buffer.readInt32BE(offset);
+    offset += 4;
+    if (encoding === TDIGEST_VERBOSE_ENCODING_CODE) {
+        offset += 16;
+        let adjustedCompression = buffer.readDoubleBE(offset);
+        offset += 8;
+        let centroidCount = buffer.readInt32BE(offset);
+        if (centroidCount > (buffer.length / 12)) { // MIN CENTROID SIZE: 8 (double = mean) + 4 (int = count)
+            throw "Centroid count requested is too high. Ensure your are loading the correct tdigest format."
+        }
+        offset += 4;
+        let centroids = [];
+        for(let i = 0; i < centroidCount; i++) {
+            let mean = buffer.readDoubleBE(offset);
+            offset += 8;
+            centroids.push({"n": 0, "mean": mean})
+        }
+        for(let i = 0; i < centroidCount; i++) {
+            let weight = buffer.readUInt32BE(offset);
+            offset += 4;
+            centroids[i]["n"] = weight;
+        }
+        this.delta = adjustedCompression === 0 ? 0 : 1 / adjustedCompression;
+        this.reset();
+        this.push_centroid(centroids);
+        return this;
+    } else if (encoding === TDIGEST_SMALL_ENCODING_CODE) {
+        offset += 16;
+        let adjustedCompression = buffer.readDoubleBE(offset);
+        offset += 8;
+        let centroidCount = buffer.readInt32BE(offset);
+        if (centroidCount > (buffer.length / 5)) { // MIN CENTROID SIZE: 4 (float = mean delta) + 1 (encoding = count)
+            throw "Centroid count requested is too high. Ensure your are loading the correct tdigest format."
+        }
+        offset += 4;
+        let centroids = [];
+
+        let currentMean = 0.0;
+        for(let i = 0; i < centroidCount; i++) {
+            let delta = buffer.readFloatBE(offset);
+            offset += 4;
+            currentMean += delta;
+            centroids.push({"n": 0, "mean": currentMean})
+        }
+
+        for(let i = 0; i < centroidCount; i++) {
+            let decodeResult = decode(buffer, offset);
+            offset = decodeResult["offset"];
+            centroids[i]["n"] = decodeResult["value"];
+        }
+
+        this.delta = adjustedCompression === 0 ? 0 : 1 / adjustedCompression;
+        this.reset();
+        this.push_centroid(centroids);
+        return this;
+    } else {
+        throw "Invalid format for serialized histogram"
+    }
+};
 
 TDigest.prototype.reset = function() {
     // prepare to digest new points.
@@ -66,6 +138,87 @@ TDigest.prototype.summary = function() {
              "max = "+this.percentile(1.0)];
     return s.join('\n');
 };
+
+TDigest.prototype.asSmallBytes = function() {
+    this.compress();
+    let centroids = this.toArray();
+    let buffer = Buffer.alloc(40 + (centroids.length * 12));
+    // This is an adjusted compression that behaves more closely to the tdunning original.
+    let adjusted_compression = this.delta === 0 ? 0 : 1.0 / this.delta;
+    let offset = 0;
+    offset = buffer.writeInt32BE(TDIGEST_SMALL_ENCODING_CODE, offset);     //   4       (int)      (Encoding type. 1 = full, 2 = small)
+    offset = buffer.writeDoubleBE(this.percentile(0), offset);             // + 8       (double)   (Min value)
+    offset = buffer.writeDoubleBE(this.percentile(100), offset);           // + 8       (double)   (Max value)
+    offset = buffer.writeDoubleBE(adjusted_compression, offset);           // + 8       (double)   (Compression factor)
+    offset = buffer.writeInt32BE(centroids.length, offset);                // + 4       (int)      (Length of centroid means)
+
+    let x = 0.0;
+    centroids.forEach(function(centroid){
+        let delta = parseFloat(centroid.mean) - x;
+        x = centroid.mean;
+        offset = buffer.writeFloatBE(delta, offset);                       // + 4  (float)  (Mean of centroid)
+    });
+
+    centroids.forEach(function(centroid){
+        offset = encode(buffer, offset, centroid.n)                        // +(<8) (bin)  (Weight of centroid)
+    });
+    return buffer.slice(0, offset);
+};
+
+TDigest.prototype.asBytes = function() {
+    this.compress();
+    let centroids = this.toArray();
+    let buffer = Buffer.alloc(40 + (centroids.length * 12));
+    // This is an adjusted compression that behaves more closely to the tdunning original.
+    let adjusted_compression = this.delta === 0 ? 0 : 1.0 / this.delta;
+    let offset = 0;
+    offset = buffer.writeInt32BE(TDIGEST_VERBOSE_ENCODING_CODE, offset);  //   4       (int)      (Encoding type. 1 = full, 2 = small)
+    offset = buffer.writeDoubleBE(this.percentile(0), offset);            // + 8       (double)   (Min value)
+    offset = buffer.writeDoubleBE(this.percentile(100), offset);          // + 8       (double)   (Max value)
+    offset = buffer.writeDoubleBE(adjusted_compression, offset);          // + 8       (double)   (Compression factor)
+    offset = buffer.writeInt32BE(centroids.length, offset);               // + 4       (int)    (Length of centroid means)
+
+    centroids.forEach(function(centroid){
+        offset = buffer.writeDoubleBE(centroid.mean, offset);              // + 8       (double)  (Mean of centroid)
+    });
+
+    centroids.forEach(function(centroid){
+        offset = buffer.writeInt32BE(centroid.n, offset)                   // + 4       (int)  (Weight of centroid)
+    });
+    return buffer.slice(0, offset);
+};
+
+function encode(buffer, offset, n) {
+    let k = 0;
+    while (n < 0 || n > 0x7f) {
+        let b = (0x80 | (0x7f & n));
+        offset = buffer.writeUInt8(b, offset);
+        n = n >>> 7;
+        k++;
+        if (k >= 6) {
+            throw "Size of n is too large."
+        }
+    }
+    return buffer.writeUInt8(n, offset);
+}
+
+function decode(buffer, offset) {
+    let v = buffer.readUInt8(offset++);
+    let z = 0x7f & v;
+    let shift = 7;
+    while ((v & 0x80) !== 0) {
+        if (shift > 28) {
+            throw "Shift too large in decode"
+        }
+        v = buffer.readUInt8(offset++);
+        z += (v & 0x7f) << shift;
+        shift += 7;
+    }
+    return {
+        "value": z,
+        "offset": offset
+    };
+}
 
 function compare_centroid_means(a, b) {
     // order two centroids by mean.
