@@ -302,7 +302,7 @@ TDigest.prototype._new_centroid = function(x, n, cumn) {
     // create and insert a new centroid into the digest (don't update
     // cumulatives).
     //
-    let c = {mean:x, n:n, cumn:cumn};
+    var c = {mean:x, n:n, cumn:cumn};
     this.centroids.insert(c);
     this.n += n;
     return c;
@@ -546,5 +546,5 @@ Digest.prototype.check_continuous = function() {
 
 module.exports = {
     'TDigest': TDigest,
-    'Digest': Digest,
+    'Digest': Digest
 };
