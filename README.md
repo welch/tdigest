@@ -112,7 +112,8 @@ See also [example.html](https://github.com/welch/tdigest/blob/master/example.htm
 
 dependencies
 -------------
-`bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
+* `bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
+* `buffer`: [https://www.npmjs.com/package/buffer](https://www.npmjs.com/package/buffer)
 
 
 [travis-image]: https://travis-ci.org/welch/tdigest.svg?branch=master
