@@ -35,6 +35,15 @@ function TDigest(delta, K, CX) {
 }
 
 TDigest.prototype.load = function(buffer, overrideCentroidLimit) {
+    // Load a TDigest structure from bytes (AVLTree format).
+    //
+    // See the asBytes(), asSmallBytes() methods for more format specifics.
+    //
+    // The delta is loaded from the compression factor in the data.
+    // The K and CX are kept from the TDigest creation time.
+    //
+    // The overrideCentroidLimit allows for loading histograms with over 100k centroids.
+    // The limit prevents OOM and array overflow errors in the case of bad data.
     let offset = 0;
     let encoding = buffer.readInt32BE(offset);
     offset += 4;
@@ -155,7 +164,7 @@ TDigest.prototype.asSmallBytes = function() {
     });
 
     centroids.forEach(function(centroid){
-        offset = encode(buffer, offset, centroid.n)                         // +(<8) (bin)  (Weight of centroid)
+        offset = encode(buffer, offset, centroid.n)                        // +(<8) (bin)  (Weight of centroid)
     });
     return buffer.slice(0, offset);
 };
@@ -170,7 +179,7 @@ TDigest.prototype.asBytes = function() {
     offset = buffer.writeInt32BE(TDIGEST_VERBOSE_ENCODING_CODE, offset);  //   4       (int)      (Encoding type. 1 = full, 2 = small)
     offset = buffer.writeDoubleBE(this.percentile(0), offset);            // + 8       (double)   (Min value)
     offset = buffer.writeDoubleBE(this.percentile(100), offset);          // + 8       (double)   (Max value)
-    offset = buffer.writeDoubleBE(adjusted_compression, offset);         // + 8       (double)   (Compression factor)
+    offset = buffer.writeDoubleBE(adjusted_compression, offset);          // + 8       (double)   (Compression factor)
     offset = buffer.writeInt32BE(centroids.length, offset);               // + 4       (int)    (Length of centroid means)
 
     centroids.forEach(function(centroid){

@@ -271,8 +271,6 @@ describe('Serialise', function(){
             tdigest.push(Math.random());
         }
         let bytes = tdigest.asBytes();
-        let base64Bytes= bytes.toString('base64');
-
         let loadedTdigest = new TDigest().load(bytes);
 
         assert.closeTo(loadedTdigest.percentile(0.0),   tdigest.percentile(0.0), 0.00001);
@@ -291,8 +289,6 @@ describe('Serialise', function(){
             tdigest.push(Math.random());
         }
         let bytes = tdigest.asSmallBytes();
-        let base64Bytes= bytes.toString('base64');
-        console.log(base64Bytes);
 
         let loadedTdigest = new TDigest().load(bytes);
 
