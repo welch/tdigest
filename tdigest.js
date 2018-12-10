@@ -41,19 +41,15 @@ TDigest.prototype.load = function(buffer, overrideCentroidLimit) {
     //
     // The delta is loaded from the compression factor in the data.
     // The K and CX are kept from the TDigest creation time.
-    //
-    // The overrideCentroidLimit allows for loading histograms with over 100k centroids.
-    // The limit prevents OOM and array overflow errors in the case of bad data.
     let offset = 0;
     let encoding = buffer.readInt32BE(offset);
     offset += 4;
-    const centroidLimit = !overrideCentroidLimit ? 100000 : overrideCentroidLimit;
     if (encoding === TDIGEST_VERBOSE_ENCODING_CODE) {
         offset += 16;
         let adjustedCompression = buffer.readDoubleBE(offset);
         offset += 8;
         let centroidCount = buffer.readInt32BE(offset);
-        if (centroidCount > centroidLimit) {
+        if (centroidCount > (buffer.length / 12)) { // MIN CENTROID SIZE: 8 (double = mean) + 4 (int = count)
             throw "Centroid count requested is too high. Ensure your are loading the correct tdigest format."
         }
         offset += 4;
@@ -77,7 +73,7 @@ TDigest.prototype.load = function(buffer, overrideCentroidLimit) {
         let adjustedCompression = buffer.readDoubleBE(offset);
         offset += 8;
         let centroidCount = buffer.readInt32BE(offset);
-        if (centroidCount > centroidLimit) {
+        if (centroidCount > (buffer.length / 5)) { // MIN CENTROID SIZE: 4 (float = mean delta) + 1 (encoding = count)
             throw "Centroid count requested is too high. Ensure your are loading the correct tdigest format."
         }
         offset += 4;
