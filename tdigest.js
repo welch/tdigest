@@ -293,13 +293,7 @@ TDigest.prototype._new_centroid = function(x, n, cumn) {
     // create and insert a new centroid into the digest (don't update
     // cumulatives).
     //
-    let c;
-    if (this.discrete) { // The mean could be a string
-        c = {mean:x, n:n, cumn:cumn};
-    } else { // Value is always a float for continuous data
-        c = {mean:parseFloat(x), n:n, cumn:cumn};
-    }
-
+    let c = {mean:x, n:n, cumn:cumn};
     this.centroids.insert(c);
     this.n += n;
     return c;
