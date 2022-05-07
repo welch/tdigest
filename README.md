@@ -17,6 +17,10 @@ there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/d
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
 
+**changes in 0.1.2:**
+
+Updated the bintree dependency to 1.0.2 to pick up its licencing declaration
+
 **changes in 0.1.1:**
 
 1. percentile on an empty digest returns *undefined* or array of *undefined*
