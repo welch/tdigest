@@ -352,8 +352,8 @@ function Digest(config) {
 Digest.prototype = Object.create(TDigest.prototype);
 Digest.prototype.constructor = Digest;
 
-Digest.prototype.push = function(x_or_xlist) {
-    TDigest.prototype.push.call(this, x_or_xlist);
+Digest.prototype.push = function(x_or_xlist, n) {
+    TDigest.prototype.push.call(this, x_or_xlist, n);
     this.check_continuous();
 };
 
@@ -387,7 +387,22 @@ Digest.prototype.check_continuous = function() {
     return false;
 };
 
+function Distributable() {
+    Digest.call(this, { mode: 'auto', thresh: 25, delta: 0.2 });
+}
+Distributable.prototype = Object.create(Digest.prototype);
+function round1 (n) {
+    return (Math.round(n * 10)) / 10
+};
+Distributable.prototype.toList = function() {
+    var result = [];
+    this._cumulate(true); // be sure cumns are exact
+    this.centroids.each(function(c) { result.push([round1(c.mean), c.n]); });
+    return result;
+};
+
 module.exports = {
     'TDigest': TDigest,
-    'Digest': Digest
+    'Digest': Digest,
+    'Distributable': Distributable
 };
