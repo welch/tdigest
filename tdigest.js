@@ -352,8 +352,8 @@ function Digest(config) {
 Digest.prototype = Object.create(TDigest.prototype);
 Digest.prototype.constructor = Digest;
 
-Digest.prototype.push = function(x_or_xlist) {
-    TDigest.prototype.push.call(this, x_or_xlist);
+Digest.prototype.push = function(x_or_xlist, n) {
+    TDigest.prototype.push.call(this, x_or_xlist, n);
     this.check_continuous();
 };
 
