@@ -1,6 +1,6 @@
 tdigest
 ============
-[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![NPM download][download-image]][npm-url]
+[![NPM version][npm-image]][npm-url] [![NPM downloads][download-image]][npm-url]
 
 Javascript implementation of Dunning's T-Digest for streaming quantile approximation
 
@@ -16,6 +16,12 @@ For an overview of T-Digest's behavior, see Davidson-Pilon's
 there are the [tdigest paper](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) and [reference implementation](https://github.com/tdunning/t-digest) (Java).
 This javascript implementation is based on a reading of the paper,
 with some boundary and performance tweaks.
+
+**changes in 0.1.3:**
+
+No code changes. Documentation only: the npm version and downloads badges now
+load over https, so they render on npmjs.com; the dead Travis CI badge and its
+config are removed.
 
 **changes in 0.1.2:**
 
@@ -115,8 +121,6 @@ dependencies
 `bintrees`: [https://www.npmjs.com/package/bintrees](https://www.npmjs.com/package/bintrees)
 
 
-[travis-image]: https://travis-ci.org/welch/tdigest.svg?branch=master
-[travis-url]: https://travis-ci.org/welch/tdigest
-[npm-image]: http://img.shields.io/npm/v/tdigest.svg
-[download-image]: http://img.shields.io/npm/dm/tdigest.svg
-[npm-url]: https://www.npmjs.org/package/tdigest
+[npm-image]: https://img.shields.io/npm/v/tdigest.svg
+[download-image]: https://img.shields.io/npm/dm/tdigest.svg
+[npm-url]: https://www.npmjs.com/package/tdigest
